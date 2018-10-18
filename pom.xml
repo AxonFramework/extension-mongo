@@ -15,13 +15,11 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <groupId>org.axonframework.extensions.mongo</groupId>
     <artifactId>axon-mongo-parent</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.0</version>
     <modules>
         <module>mongo</module>
     </modules>
@@ -381,7 +379,7 @@
         <connection>scm:git:git://github.com/AxonFramework/extension-mongo.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-mongo.git</developerConnection>
         <url>https://github.com/AxonFramework/extension-mongo</url>
-        <tag>HEAD</tag>
+        <tag>axon-mongo-parent-4.0</tag>
     </scm>
 
     <developers>
