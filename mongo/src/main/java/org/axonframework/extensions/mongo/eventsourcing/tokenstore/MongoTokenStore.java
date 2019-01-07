@@ -282,7 +282,7 @@ public class MongoTokenStore implements TokenStore {
                         tokenEntry.getSerializedToken() == null ? null : tokenEntry.getSerializedToken().getData())
                 .append("tokenType",
                         tokenEntry.getSerializedToken() == null ? null : tokenEntry.getSerializedToken()
-                                                                                   .getContentType().getName());
+                                                                                   .getType().getName());
     }
 
     private AbstractTokenEntry<?> documentToTokenEntry(Document document) {
