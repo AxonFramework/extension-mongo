@@ -107,7 +107,6 @@ public class MongoTokenStoreTest {
                                                                    .claimTimeout(claimTimeout)
                                                                    .contentType(contentType);
         tokenStore = tokenStoreBuilder.nodeId(testOwner).build();
-        tokenStore.ensureIndexes();
         tokenStoreDifferentOwner = tokenStoreBuilder.nodeId("anotherOwner").build();
     }
 
