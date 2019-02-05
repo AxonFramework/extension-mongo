@@ -29,6 +29,7 @@ import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.MongoTestContext;
 import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
 import org.junit.*;
@@ -262,5 +263,42 @@ public class MongoTokenStoreTest {
 
         assertEquals(new GlobalSequenceTrackingToken(iterationOfSuccessfulAttempt),
                      tokenStore.fetchToken(testProcessorName, testSegment));
+    }
+
+
+    @Test
+    public void testStoreAndFetchTokenResultsInTheSameTokenWithXStreamSerializer() {
+        TokenStore tokenStore = MongoTokenStore.builder()
+                                               .serializer(XStreamSerializer.builder().build())
+                                               .mongoTemplate(mongoTemplate)
+                                               .claimTimeout(claimTimeout)
+                                               .contentType(contentType)
+                                               .nodeId(testOwner)
+                                               .build();
+        GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
+        String testProcessorName = "processorName";
+        int testSegment = 0;
+
+        tokenStore.storeToken(testToken, testProcessorName, testSegment);
+        TrackingToken resultToken = tokenStore.fetchToken(testProcessorName, testSegment);
+        assertEquals(testToken, resultToken);
+    }
+
+    @Test
+    public void testStoreAndFetchTokenResultsInTheSameTokenWithJacksonSerializer() {
+        TokenStore tokenStore = MongoTokenStore.builder()
+                                               .serializer(JacksonSerializer.builder().build())
+                                               .mongoTemplate(mongoTemplate)
+                                               .claimTimeout(claimTimeout)
+                                               .contentType(contentType)
+                                               .nodeId(testOwner)
+                                               .build();
+        GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
+        String testProcessorName = "processorName";
+        int testSegment = 0;
+
+        tokenStore.storeToken(testToken, testProcessorName, testSegment);
+        TrackingToken resultToken = tokenStore.fetchToken(testProcessorName, testSegment);
+        assertEquals(testToken, resultToken);
     }
 }
