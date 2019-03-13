@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.annotation.PostConstruct;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Projections.*;
@@ -92,6 +91,7 @@ public class MongoTokenStore implements TokenStore {
         this.claimTimeout = builder.claimTimeout;
         this.nodeId = builder.nodeId;
         this.contentType = builder.contentType;
+        ensureIndexes();
     }
 
     /**
@@ -307,8 +307,12 @@ public class MongoTokenStore implements TokenStore {
 
     /**
      * Creates the indexes required to work with the TokenStore.
+     *
+     * @deprecated  This method is now called by the constructor instead of the dependency injection framework running
+     *              the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency
+     *              injection framework.
      */
-    @PostConstruct
+    @Deprecated
     public void ensureIndexes() {
         mongoTemplate.trackingTokensCollection().createIndex(Indexes.ascending("processorName", "segment"),
                                                              new IndexOptions().unique(true));
