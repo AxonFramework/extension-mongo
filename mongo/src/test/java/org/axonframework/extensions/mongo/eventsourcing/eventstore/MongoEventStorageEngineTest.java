@@ -88,12 +88,17 @@ public class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngine
             Assume.assumeNoException(e);
         }
         mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
+        testSubject = context.getBean(MongoEventStorageEngine.class);
+        setTestSubject(testSubject);
+    }
+
+    @Override
+    @After
+    public void tearDown() {
         mongoTemplate.eventCollection().dropIndexes();
         mongoTemplate.snapshotCollection().dropIndexes();
         mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
         mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
-        testSubject = MongoEventStorageEngine.builder().mongoTemplate(mongoTemplate).build();
-        setTestSubject(testSubject);
     }
 
     @Test
