@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
@@ -64,6 +63,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
         super(builder);
         this.template = builder.template;
         this.storageStrategy = builder.storageStrategy;
+        ensureIndexes();
     }
 
     /**
@@ -95,8 +95,12 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
 
     /**
      * Make sure an index is created on the collection that stores domain events.
+     *
+     * @deprecated  This method is now called by the constructor instead of the dependency injection framework running
+     *              the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency
+     *              injection framework.
      */
-    @PostConstruct
+    @Deprecated
     public void ensureIndexes() {
         storageStrategy.ensureIndexes(template.eventCollection(), template.snapshotCollection());
     }
