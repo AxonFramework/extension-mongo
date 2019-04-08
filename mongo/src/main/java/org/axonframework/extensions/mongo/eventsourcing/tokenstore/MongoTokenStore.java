@@ -23,6 +23,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.eventhandling.TrackingToken;
@@ -30,6 +31,7 @@ import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
 import org.axonframework.eventhandling.tokenstore.GenericTokenEntry;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
+import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
 import org.axonframework.eventhandling.tokenstore.jpa.TokenEntry;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.serialization.Serializer;
@@ -110,7 +112,27 @@ public class MongoTokenStore implements TokenStore {
 
     @Override
     public void storeToken(TrackingToken token, String processorName, int segment) throws UnableToClaimTokenException {
-        updateOrInsertTokenEntry(token, processorName, segment);
+        updateToken(token, processorName, segment);
+    }
+
+    private void updateToken(TrackingToken token, String processorName, int segment) {
+        AbstractTokenEntry<?> tokenEntry =
+                new GenericTokenEntry<>(token, serializer, contentType, processorName, segment);
+        tokenEntry.claim(nodeId, claimTimeout);
+
+        Bson update = combine(set("owner", nodeId),
+                              set("timestamp", tokenEntry.timestamp().toEpochMilli()),
+                              set("token", tokenEntry.getSerializedToken().getData()),
+                              set("tokenType", tokenEntry.getSerializedToken().getType().getName()));
+
+        UpdateResult updateResult = mongoTemplate.trackingTokensCollection()
+                                                 .updateOne(claimableTokenEntryFilter(processorName, segment), update);
+
+        if (updateResult.getModifiedCount() == 0) {
+            throw new UnableToClaimTokenException(format(
+                    "Unable to claim token '%s[%s]'. It has not been initialized yet", processorName, segment
+            ));
+        }
     }
 
     @Override
@@ -143,8 +165,31 @@ public class MongoTokenStore implements TokenStore {
      */
     @Override
     public TrackingToken fetchToken(String processorName, int segment) throws UnableToClaimTokenException {
-        AbstractTokenEntry<?> tokenEntry = loadOrInsertTokenEntry(processorName, segment);
-        return tokenEntry.getToken(serializer);
+        return loadToken(processorName, segment).getToken(serializer);
+    }
+
+    private AbstractTokenEntry<?> loadToken(String processorName, int segment) {
+        Document document = mongoTemplate.trackingTokensCollection()
+                                         .findOneAndUpdate(
+                                                 claimableTokenEntryFilter(processorName, segment),
+                                                 combine(set("owner", nodeId), set("timestamp", clock.millis())),
+                                                 new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+                                         );
+
+        if (document == null) {
+            throw new UnableToClaimTokenException(
+                    format("Unable to claim token '%s[%s]'. It has not been initialized yet", processorName, segment)
+            );
+        }
+
+        AbstractTokenEntry<?> tokenEntry = documentToTokenEntry(document);
+        if (!tokenEntry.claim(nodeId, claimTimeout)) {
+            throw new UnableToClaimTokenException(format(
+                    "Unable to claim token '%s[%s]'. It is owned by '%s'", processorName, segment, tokenEntry.getOwner()
+            ));
+        }
+
+        return tokenEntry;
     }
 
     @Override
@@ -181,6 +226,44 @@ public class MongoTokenStore implements TokenStore {
     }
 
     @Override
+    public void initializeSegment(TrackingToken token,
+                                  String processorName,
+                                  int segment) throws UnableToInitializeTokenException {
+        try {
+            AbstractTokenEntry<?> tokenEntry =
+                    new GenericTokenEntry<>(token, serializer, contentType, processorName, segment);
+
+            mongoTemplate.trackingTokensCollection()
+                         .insertOne(tokenEntryToDocument(tokenEntry));
+        } catch (MongoWriteException exception) {
+            if (ErrorCategory.fromErrorCode(exception.getError().getCode()) == ErrorCategory.DUPLICATE_KEY) {
+                throw new UnableToInitializeTokenException(
+                        format("Unable to initialize token '%s[%s]'", processorName, segment)
+                );
+            }
+        }
+    }
+
+    @Override
+    public void deleteToken(String processorName, int segment) throws UnableToClaimTokenException {
+        DeleteResult deleteResult = mongoTemplate.trackingTokensCollection()
+                                                 .deleteOne(and(
+                                                         eq("processorName", processorName),
+                                                         eq("segment", segment),
+                                                         eq("owner", nodeId)
+                                                 ));
+
+        if (deleteResult.getDeletedCount() == 0) {
+            throw new UnableToClaimTokenException("Unable to remove token. It is not owned by " + nodeId);
+        }
+    }
+
+    @Override
+    public boolean requiresExplicitSegmentInitialization() {
+        return true;
+    }
+
+    @Override
     public int[] fetchSegments(String processorName) {
         ArrayList<Integer> segments = mongoTemplate.trackingTokensCollection()
                                                    .find(eq("processorName", processorName))
@@ -201,76 +284,18 @@ public class MongoTokenStore implements TokenStore {
      *
      * @param processorName the processor name of the token entry
      * @param segment       the segment of the token entry
-     * @return the filter
+     * @return a {@link Bson} defining the filter
      */
     private Bson claimableTokenEntryFilter(String processorName, int segment) {
         return and(
                 eq("processorName", processorName),
                 eq("segment", segment),
-                or(eq("owner", nodeId),
-                   eq("owner", null),
-                   lt("timestamp", clock.instant().minus(claimTimeout).toEpochMilli()))
+                or(
+                        eq("owner", nodeId),
+                        eq("owner", null),
+                        lt("timestamp", clock.instant().minus(claimTimeout).toEpochMilli())
+                )
         );
-    }
-
-    private void updateOrInsertTokenEntry(TrackingToken token, String processorName, int segment) {
-        AbstractTokenEntry<?> tokenEntry = new GenericTokenEntry<>(token,
-                                                                   serializer,
-                                                                   contentType,
-                                                                   processorName,
-                                                                   segment);
-        tokenEntry.claim(nodeId, claimTimeout);
-        Bson update = combine(set("owner", nodeId),
-                              set("timestamp", tokenEntry.timestamp().toEpochMilli()),
-                              set("token", tokenEntry.getSerializedToken().getData()),
-                              set("tokenType", tokenEntry.getSerializedToken().getType().getName()));
-        UpdateResult updateResult = mongoTemplate.trackingTokensCollection()
-                                                 .updateOne(claimableTokenEntryFilter(processorName, segment), update);
-
-        if (updateResult.getModifiedCount() == 0) {
-            try {
-                mongoTemplate.trackingTokensCollection()
-                             .insertOne(tokenEntryToDocument(tokenEntry));
-            } catch (MongoWriteException exception) {
-                if (ErrorCategory.fromErrorCode(exception.getError().getCode()) == ErrorCategory.DUPLICATE_KEY) {
-                    throw new UnableToClaimTokenException(format("Unable to claim token '%s[%s]'",
-                                                                 processorName,
-                                                                 segment));
-                }
-            }
-        }
-    }
-
-    private AbstractTokenEntry<?> loadOrInsertTokenEntry(String processorName, int segment) {
-        Document document = mongoTemplate.trackingTokensCollection()
-                                         .findOneAndUpdate(claimableTokenEntryFilter(processorName, segment),
-                                                           combine(set("owner", nodeId),
-                                                                   set("timestamp", clock.millis())),
-                                                           new FindOneAndUpdateOptions()
-                                                                   .returnDocument(ReturnDocument.AFTER));
-
-        if (document == null) {
-            try {
-                AbstractTokenEntry<?> tokenEntry = new GenericTokenEntry<>(null,
-                                                                           serializer,
-                                                                           contentType,
-                                                                           processorName,
-                                                                           segment);
-                tokenEntry.claim(nodeId, claimTimeout);
-
-                mongoTemplate.trackingTokensCollection()
-                             .insertOne(tokenEntryToDocument(tokenEntry));
-
-                return tokenEntry;
-            } catch (MongoWriteException exception) {
-                if (ErrorCategory.fromErrorCode(exception.getError().getCode()) == ErrorCategory.DUPLICATE_KEY) {
-                    throw new UnableToClaimTokenException(format("Unable to claim token '%s[%s]'",
-                                                                 processorName,
-                                                                 segment));
-                }
-            }
-        }
-        return documentToTokenEntry(document);
     }
 
     private Document tokenEntryToDocument(AbstractTokenEntry<?> tokenEntry) {
@@ -293,7 +318,8 @@ public class MongoTokenStore implements TokenStore {
                 document.getString("owner"),
                 document.getString("processorName"),
                 document.getInteger("segment"),
-                contentType);
+                contentType
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -308,9 +334,9 @@ public class MongoTokenStore implements TokenStore {
     /**
      * Creates the indexes required to work with the TokenStore.
      *
-     * @deprecated  This method is now called by the constructor instead of the dependency injection framework running
-     *              the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency
-     *              injection framework.
+     * @deprecated this method is now called by the constructor instead of the dependency injection framework running
+     * the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency injection
+     * framework.
      */
     @Deprecated
     public void ensureIndexes() {

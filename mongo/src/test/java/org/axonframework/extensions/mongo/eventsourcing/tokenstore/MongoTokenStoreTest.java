@@ -18,12 +18,14 @@ package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
+import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
 import org.axonframework.extensions.mongo.DefaultMongoTemplate;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.MongoTestContext;
@@ -51,6 +53,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -117,6 +121,7 @@ public class MongoTokenStoreTest {
 
     @Test
     public void testClaimAndUpdateToken() {
+        tokenStore.initializeTokenSegments(testProcessorName, testSegment + 1);
         assertNull(tokenStore.fetchToken(testProcessorName, testSegment));
         TrackingToken token = new GlobalSequenceTrackingToken(1L);
         tokenStore.storeToken(token, testProcessorName, testSegment);
@@ -169,6 +174,8 @@ public class MongoTokenStoreTest {
     @Test
     public void testClaimAndExtend() {
         TrackingToken token = new GlobalSequenceTrackingToken(1L);
+        tokenStore.initializeSegment(token, testProcessorName, testSegment);
+
         tokenStore.storeToken(token, testProcessorName, testSegment);
 
         try {
@@ -199,10 +206,8 @@ public class MongoTokenStoreTest {
 
     @Test
     public void testFetchSegments() {
-        tokenStore.fetchToken("processor1", 1);
-        tokenStore.fetchToken("processor1", 0);
-        tokenStore.fetchToken("processor1", 2);
-        tokenStore.fetchToken("processor2", 0);
+        tokenStore.initializeTokenSegments("processor1", 3);
+        tokenStore.initializeTokenSegments("processor2", 1);
 
         assertArrayEquals(new int[]{0, 1, 2}, tokenStore.fetchSegments("processor1"));
         assertArrayEquals(new int[]{0}, tokenStore.fetchSegments("processor2"));
@@ -228,6 +233,7 @@ public class MongoTokenStoreTest {
                                                            .contentType(contentType)
                                                            .build();
                     GlobalSequenceTrackingToken token = new GlobalSequenceTrackingToken(iteration);
+                    tokenStore.initializeSegment(token, testProcessorName, testSegment);
                     tokenStore.storeToken(token, testProcessorName, testSegment);
                     return iteration;
                 } catch (UnableToClaimTokenException exception) {
@@ -264,7 +270,6 @@ public class MongoTokenStoreTest {
                      tokenStore.fetchToken(testProcessorName, testSegment));
     }
 
-
     @Test
     public void testStoreAndFetchTokenResultsInTheSameTokenWithXStreamSerializer() {
         TokenStore tokenStore = MongoTokenStore.builder()
@@ -277,6 +282,8 @@ public class MongoTokenStoreTest {
         GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
         String testProcessorName = "processorName";
         int testSegment = 0;
+
+        tokenStore.initializeSegment(testToken, testProcessorName, testSegment);
 
         tokenStore.storeToken(testToken, testProcessorName, testSegment);
         TrackingToken resultToken = tokenStore.fetchToken(testProcessorName, testSegment);
@@ -296,8 +303,76 @@ public class MongoTokenStoreTest {
         String testProcessorName = "processorName";
         int testSegment = 0;
 
+        tokenStore.initializeSegment(testToken, testProcessorName, testSegment);
+
         tokenStore.storeToken(testToken, testProcessorName, testSegment);
         TrackingToken resultToken = tokenStore.fetchToken(testProcessorName, testSegment);
         assertEquals(testToken, resultToken);
+    }
+
+    @Test
+    public void testRequiresExplicitSegmentInitializationReturnsTrue() {
+        assertTrue(tokenStore.requiresExplicitSegmentInitialization());
+    }
+
+    @Test
+    public void testInitializeSegmentForNullTokenOnlyCreatesSegments() {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+
+        int[] actual = tokenStore.fetchSegments(testProcessorName);
+        Arrays.sort(actual);
+        assertArrayEquals(new int[]{testSegment}, actual);
+
+        assertNull(tokenStore.fetchToken(testProcessorName, testSegment));
+    }
+
+    @Test
+    public void testInitializeSegmentInsertsTheProvidedTokenAndInitializesTheGivenSegment() {
+        GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
+        tokenStore.initializeSegment(testToken, testProcessorName, testSegment);
+
+        int[] actual = tokenStore.fetchSegments(testProcessorName);
+        Arrays.sort(actual);
+        assertArrayEquals(new int[]{testSegment}, actual);
+
+        TrackingToken resultToken = tokenStore.fetchToken(testProcessorName, testSegment);
+        assertEquals(testToken, resultToken);
+    }
+
+    @Test(expected = UnableToInitializeTokenException.class)
+    public void testInitializeSegmentThrowsUnableToInitializeTokenExceptionForDuplicateKey() {
+        GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
+        tokenStore.initializeSegment(testToken, testProcessorName, testSegment);
+        // Initializes the given token twice, causing the exception
+        tokenStore.initializeSegment(testToken, testProcessorName, testSegment);
+    }
+
+    @Test
+    public void testDeleteTokenRemovesTheSpecifiedToken() {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+        // Claim the token by fetching it to be able to delete it
+        tokenStore.fetchToken(testProcessorName, testSegment);
+        // Verify whether there is a document stored under the given processor name and segment
+        MongoCursor<Document> resultIterator =
+                mongoTemplate.trackingTokensCollection()
+                             .find(and(eq("processorName", testProcessorName), eq("segment", testSegment)))
+                             .iterator();
+        assertTrue(resultIterator.hasNext());
+
+
+        tokenStore.deleteToken(testProcessorName, testSegment);
+
+        resultIterator =
+                mongoTemplate.trackingTokensCollection()
+                             .find(and(eq("processorName", testProcessorName), eq("segment", testSegment)))
+                             .iterator();
+        assertFalse(resultIterator.hasNext());
+    }
+
+    @Test(expected = UnableToClaimTokenException.class)
+    public void testDeleteTokenThrowsUnableToClaimTokenExceptionIfTheCallingProcessDoesNotOwnTheToken() {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+        // The token should be fetched to be claimed by somebody, so this should throw a UnableToClaimTokenException
+        tokenStore.deleteToken(testProcessorName, testSegment);
     }
 }
