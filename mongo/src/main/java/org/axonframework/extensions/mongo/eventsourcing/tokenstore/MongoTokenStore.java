@@ -130,7 +130,8 @@ public class MongoTokenStore implements TokenStore {
 
         if (updateResult.getModifiedCount() == 0) {
             throw new UnableToClaimTokenException(format(
-                    "Unable to claim token '%s[%s]'. It has not been initialized yet", processorName, segment
+                    "Unable to claim token '%s[%s]'. It is either already claimed or it does not exist",
+                    processorName, segment
             ));
         }
     }
