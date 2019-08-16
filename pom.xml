@@ -19,7 +19,7 @@
 
     <groupId>org.axonframework.extensions.mongo</groupId>
     <artifactId>axon-mongo-parent</artifactId>
-    <version>4.2</version>
+    <version>4.2.1-SNAPSHOT</version>
     <modules>
         <module>mongo</module>
     </modules>
@@ -379,7 +379,7 @@
         <connection>scm:git:git://github.com/AxonFramework/extension-mongo.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-mongo.git</developerConnection>
         <url>https://github.com/AxonFramework/extension-mongo</url>
-        <tag>axon-mongo-4.2</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
