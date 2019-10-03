@@ -54,7 +54,7 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     private final long timestamp;
     private final Map<String, Long> trackedEvents;
 
-    private MongoTrackingToken(long timestamp, Map<String, Long> trackedEvents) {
+    protected MongoTrackingToken(long timestamp, Map<String, Long> trackedEvents) {
         this.timestamp = timestamp;
         this.trackedEvents = trackedEvents;
     }
@@ -193,7 +193,7 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public TrackingToken upperBound(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
-        Long timestamp = max(((MongoTrackingToken)other).timestamp, this.timestamp);
+        Long timestamp = max(((MongoTrackingToken) other).timestamp, this.timestamp);
         Map<String, Long> events = new HashMap<>(trackedEvents);
         events.putAll(((MongoTrackingToken) other).trackedEvents);
         return new MongoTrackingToken(timestamp, events);
