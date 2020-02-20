@@ -110,7 +110,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.2</axon.version>
+        <axon.version>4.3</axon.version>
 
         <spring.version>5.1.4.RELEASE</spring.version>
         <spring.boot.version>2.1.2.RELEASE</spring.boot.version>
