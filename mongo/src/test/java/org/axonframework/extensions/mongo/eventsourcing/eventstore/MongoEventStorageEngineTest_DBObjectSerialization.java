@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2010-2017. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,45 +29,50 @@ import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerialize
 import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
-import org.junit.*;
-import org.junit.runner.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assumptions.*;
 import static org.mockito.Mockito.*;
 
 /**
+ * Test class validating the {@link MongoEventStorageEngine} with the {@link DBObjectXStreamSerializer}.
+ *
  * @author Rene de Waele
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@DirtiesContext
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = MongoEventStorageEngineTest_DBObjectSerialization.TestContext.class)
-public class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEventStorageEngineTest {
-
-    private static final Logger logger =
-            LoggerFactory.getLogger(MongoEventStorageEngineTest_DBObjectSerialization.class);
+class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEventStorageEngineTest {
 
     private static MongodExecutable mongoExe;
     private static MongodProcess mongod;
 
+    @Autowired
+    private ApplicationContext context;
+    private DefaultMongoTemplate mongoTemplate;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private MongoEventStorageEngine testSubject;
 
-    @BeforeClass
-    public static void start() throws IOException {
+    @BeforeAll
+    static void start() throws IOException {
         mongoExe = MongoLauncher.prepareExecutable();
         mongod = mongoExe.start();
     }
 
-    @AfterClass
-    public static void shutdown() {
+    @AfterAll
+    static void shutdown() {
         if (mongod != null) {
             mongod.stop();
         }
@@ -75,20 +81,13 @@ public class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractM
         }
     }
 
-    @Autowired
-    private ApplicationContext context;
-
-    private DefaultMongoTemplate mongoTemplate;
-
-    @SuppressWarnings("Duplicates")
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         MongoClient mongoClient = null;
         try {
             mongoClient = context.getBean(MongoClient.class);
         } catch (Exception e) {
-            logger.error("No Mongo instance found. Ignoring test.");
-            Assume.assumeNoException(e);
+            assumeTrue(true, "No Mongo instance found. Ignoring test.");
         }
         mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
         mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
@@ -97,14 +96,15 @@ public class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractM
         mongoTemplate.snapshotCollection().dropIndexes();
         testSubject = context.getBean(MongoEventStorageEngine.class);
         setTestSubject(testSubject);
-
-        testSubject.ensureIndexes();
     }
 
-    @Test
     @Override
-    public void testUniqueKeyConstraintOnEventIdentifier() {
-        logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.eventCollection().dropIndexes();
+        mongoTemplate.snapshotCollection().dropIndexes();
+        mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
+        mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
     }
 
     @Override

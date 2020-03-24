@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2010-2016. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,25 +17,26 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.MongoClientOptions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * Test class validating the {@link MongoOptionsFactory}.
+ *
  * @author Jettro Coenradie
  */
-public class MongoOptionsFactoryTest {
+class MongoOptionsFactoryTest {
 
     private MongoOptionsFactory factory;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         factory = new MongoOptionsFactory();
     }
 
     @Test
-    public void testCreateMongoOptions_defaults() {
+    void testCreateMongoOptions_defaults() {
         MongoClientOptions options = factory.createMongoOptions();
         MongoClientOptions defaults = MongoClientOptions.builder().build();
 
@@ -44,11 +45,11 @@ public class MongoOptionsFactoryTest {
         assertEquals(defaults.getConnectionsPerHost(), options.getConnectionsPerHost());
         assertEquals(defaults.getConnectTimeout(), options.getConnectTimeout());
         assertEquals(defaults.getThreadsAllowedToBlockForConnectionMultiplier(),
-                options.getThreadsAllowedToBlockForConnectionMultiplier());
+                     options.getThreadsAllowedToBlockForConnectionMultiplier());
     }
 
     @Test
-    public void testCreateMongoOptions_customSet() {
+    void testCreateMongoOptions_customSet() {
         factory.setConnectionsPerHost(9);
         factory.setConnectionTimeout(11);
         factory.setMaxWaitTime(3);

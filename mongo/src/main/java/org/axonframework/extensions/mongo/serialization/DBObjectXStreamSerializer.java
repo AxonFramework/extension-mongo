@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import java.nio.charset.Charset;
 public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
 
     /**
-     * Instantiate a {@link DBObjectXStreamSerializer} based on the fields contained in the {@link Builder}.
-     * The {@link XStream} instance is configured with several converters for the most common types in Axon.
+     * Instantiate a {@link DBObjectXStreamSerializer} based on the fields contained in the {@link Builder}. The {@link
+     * XStream} instance is configured with several converters for the most common types in Axon.
      *
      * @param builder the {@link Builder} used to instantiate a {@link DBObjectXStreamSerializer} instance
      */
@@ -56,14 +56,12 @@ public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
      * {@link Charset#forName(String)} using the {@code UTF-8} character set, the {@link RevisionResolver} defaults to
      * an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to a {@link ChainingConverter}.
      * <p>
-     * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the
-     * {@link org.axonframework.eventhandling.GenericDomainEventMessage}, the
-     * {@link org.axonframework.commandhandling.GenericCommandMessage} and the
-     * {@link org.axonframework.messaging.MetaData} objects among others. Additionally, a {@link MetaDataConverter} is
-     * registered too. Lastly, if the provided Converter instance is of type ChainingConverter, then the
-     * {@link DBObjectXStreamSerializer#registerConverters(ChainingConverter)} function will be called. This will
-     * register the
-     * {@link DBObjectToStringContentTypeConverter}, {@link DocumentToStringContentTypeConverter} and
+     * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the {@link
+     * org.axonframework.eventhandling.GenericDomainEventMessage}, the {@link org.axonframework.commandhandling.GenericCommandMessage}
+     * and the {@link org.axonframework.messaging.MetaData} objects among others. Additionally, a {@code
+     * MetaDataConverter} is registered too. Lastly, if the provided Converter instance is of type ChainingConverter,
+     * then the {@link DBObjectXStreamSerializer#registerConverters(ChainingConverter)} function will be called. This
+     * will register the {@link DBObjectToStringContentTypeConverter}, {@link DocumentToStringContentTypeConverter} and
      * {@link StringToDBObjectContentTypeConverter} to the Converter chain.
      *
      * @return a Builder to be able to create a {@link DBObjectXStreamSerializer}
@@ -100,16 +98,13 @@ public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
      * {@link Charset#forName(String)} using the {@code UTF-8} character set, the {@link RevisionResolver} defaults to
      * an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to a {@link ChainingConverter}.
      * <p>
-     * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the
-     * {@link org.axonframework.eventhandling.GenericDomainEventMessage}, the
-     * {@link org.axonframework.commandhandling.GenericCommandMessage}, the
-     * {@link AnnotatedSaga} and the {@link org.axonframework.messaging.MetaData}
-     * objects among others. Additionally, a {@link MetaDataConverter} is registered too. Lastly, if the
-     * provided Converter instance is of type ChainingConverter, then the
-     * {@link DBObjectXStreamSerializer#registerConverters(ChainingConverter)} function will be called. This will
-     * register the
-     * {@link DBObjectToStringContentTypeConverter}, {@link DocumentToStringContentTypeConverter} and
-     * {@link StringToDBObjectContentTypeConverter} to the Converter chain.
+     * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the {@link
+     * org.axonframework.eventhandling.GenericDomainEventMessage}, the {@link org.axonframework.commandhandling.GenericCommandMessage},
+     * the {@link AnnotatedSaga} and the {@link org.axonframework.messaging.MetaData} objects among others.
+     * Additionally, a {@code MetaDataConverter} is registered too. Lastly, if the provided Converter instance is of
+     * type ChainingConverter, then the {@link DBObjectXStreamSerializer#registerConverters(ChainingConverter)} function
+     * will be called. This will register the {@link DBObjectToStringContentTypeConverter}, {@link
+     * DocumentToStringContentTypeConverter} and {@link StringToDBObjectContentTypeConverter} to the Converter chain.
      */
     public static class Builder extends AbstractXStreamSerializer.Builder {
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2010-2017. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,8 +42,8 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
     /**
      * Instantiate a {@link DefaultMongoTemplate} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an
-     * {@link AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an {@link
+     * AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link DefaultMongoTemplate} instance
      */
@@ -58,14 +58,14 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
     /**
      * Instantiate a Builder to be able to create a {@link DefaultMongoTemplate}.
      * <p>
-     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName},
-     * {@code trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to
-     * {@code trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
+     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName}, {@code
+     * trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to {@code
+     * trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
      * <p>
      * The {@link MongoDatabase} is a <b>hard requirement</b> and as such should be provided. Can either be provided
      * directly, or by setting a {@link MongoClient}. When choosing the latter approach, the MongoDatabase name can be
      * specified by using the {@link Builder#mongoDatabase(MongoClient, String)} function. Otherwise, the database name
-     * defaults to {@link AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE}
+     * defaults to {@code AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE}
      *
      * @return a Builder to be able to create a {@link DefaultMongoTemplate}
      */
@@ -136,14 +136,14 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
     /**
      * Builder class to instantiate a {@link DefaultMongoTemplate}.
      * <p>
-     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName},
-     * {@code trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to
-     * {@code trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
+     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName}, {@code
+     * trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to {@code
+     * trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
      * <p>
      * The {@link MongoDatabase} is a <b>hard requirement</b> and as such should be provided. Can either be provided
      * directly, or by setting a {@link MongoClient}. When choosing the latter approach, the MongoDatabase name can be
      * specified by using the {@link Builder#mongoDatabase(MongoClient, String)} function. Otherwise, the database name
-     * defaults to {@link AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE}
+     * defaults to {@code AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE}
      */
     public static class Builder extends AbstractMongoTemplate.Builder {
 
@@ -210,8 +210,8 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         }
 
         /**
-         * Sets the {@code sagasCollectionName} to use as the collection name for Saga instances. Defaults to a
-         * {@code "sagas"} {@link String}.
+         * Sets the {@code sagasCollectionName} to use as the collection name for Saga instances. Defaults to a {@code
+         * "sagas"} {@link String}.
          *
          * @param sagasCollectionName a {@link String} specifying the collection name for Sagas
          * @return the current Builder instance, for fluent interfacing

@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2010-2016. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,10 +18,9 @@ package org.axonframework.extensions.mongo.serialization;
 
 import org.axonframework.serialization.Revision;
 import org.axonframework.serialization.SerializedObject;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,23 +30,26 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * Test class validating the {@link DBObjectXStreamSerializer}.
+ *
  * @author Allard Buijze
  */
-public class DBObjectXStreamSerializerTest {
+class DBObjectXStreamSerializerTest {
 
-    private DBObjectXStreamSerializer testSubject;
     private static final String SPECIAL__CHAR__STRING = "Special chars: '\"&;\n\\<>/\n\t";
 
-    @Before
-    public void setUp() {
+    private DBObjectXStreamSerializer testSubject;
+
+    @BeforeEach
+    void setUp() {
         this.testSubject = DBObjectXStreamSerializer.builder().build();
     }
 
     @Test
-    public void testSerializeAndDeserializeDomainEventWithListOfObjects() {
+    void testSerializeAndDeserializeDomainEventWithListOfObjects() {
         List<Object> objectList = new ArrayList<>();
         objectList.add("a");
         objectList.add(1L);
@@ -63,7 +65,7 @@ public class DBObjectXStreamSerializerTest {
 
     // Test for issue AXON-141 - BSONNode - marshalling EnumSet problem
     @Test
-    public void testSerializeEnumSet() {
+    void testSerializeEnumSet() {
         SerializedObject<String> serialized = testSubject.serialize(new TestEventWithEnumSet("testing123"),
                                                                     String.class);
 
@@ -74,7 +76,7 @@ public class DBObjectXStreamSerializerTest {
     }
 
     @Test
-    public void testSerializeAndDeserializeDomainEvent() {
+    void testSerializeAndDeserializeDomainEvent() {
         SerializedObject<byte[]> serializedEvent = testSubject.serialize(new TestEvent("Henk"), byte[].class);
         Object actualResult = testSubject.deserialize(serializedEvent);
         assertTrue(actualResult instanceof TestEvent);
@@ -83,20 +85,20 @@ public class DBObjectXStreamSerializerTest {
     }
 
     @Test
-    public void testPackageAlias() {
+    void testPackageAlias() {
         testSubject.addPackageAlias("test", "org.axonframework.extensions.mongo.serialization");
         testSubject.addPackageAlias("axon", "org.axonframework");
 
         SerializedObject<String> serialized = testSubject.serialize(new StubDomainEvent(), String.class);
         String asString = serialized.getData();
-        assertFalse("Package name found in:" + asString, asString.contains("org"));
+        assertFalse(asString.contains("org"), "Package name found in:" + asString);
         StubDomainEvent deserialized = testSubject.deserialize(serialized);
         assertEquals(StubDomainEvent.class, deserialized.getClass());
         assertTrue(asString.contains("test"));
     }
 
     @Test
-    public void testAlias() throws UnsupportedEncodingException {
+    void testAlias() {
         testSubject.addAlias("stub", StubDomainEvent.class);
 
         SerializedObject<byte[]> serialized = testSubject.serialize(new StubDomainEvent(), byte[].class);
@@ -108,7 +110,7 @@ public class DBObjectXStreamSerializerTest {
     }
 
     @Test
-    public void testFieldAlias() throws UnsupportedEncodingException {
+    void testFieldAlias() {
         testSubject.addFieldAlias("relevantPeriod", TestEvent.class, "period");
 
         SerializedObject<byte[]> serialized = testSubject.serialize(new TestEvent("hello"), byte[].class);
@@ -120,7 +122,7 @@ public class DBObjectXStreamSerializerTest {
     }
 
     @Test
-    public void testRevisionNumber_FromAnnotation() {
+    void testRevisionNumber_FromAnnotation() {
         SerializedObject<byte[]> serialized = testSubject.serialize(new RevisionSpecifiedEvent(), byte[].class);
         assertNotNull(serialized);
         assertEquals("2", serialized.getType().getRevision());
@@ -129,7 +131,7 @@ public class DBObjectXStreamSerializerTest {
 
     @SuppressWarnings("Duplicates")
     @Test
-    public void testSerializedTypeUsesClassAlias() {
+    void testSerializedTypeUsesClassAlias() {
         testSubject.addAlias("rse", RevisionSpecifiedEvent.class);
         SerializedObject<byte[]> serialized = testSubject.serialize(new RevisionSpecifiedEvent(), byte[].class);
         assertNotNull(serialized);
@@ -142,18 +144,18 @@ public class DBObjectXStreamSerializerTest {
      * #150</a>.
      */
     @Test
-    public void testSerializeWithSpecialCharacters_WithoutUpcasters() {
+    void testSerializeWithSpecialCharacters_WithoutUpcasters() {
         SerializedObject<byte[]> serialized = testSubject.serialize(new TestEvent(SPECIAL__CHAR__STRING), byte[].class);
         TestEvent deserialized = testSubject.deserialize(serialized);
         assertEquals(SPECIAL__CHAR__STRING, deserialized.getName());
     }
 
     @Revision("2")
-    public static class RevisionSpecifiedEvent {
+    private static class RevisionSpecifiedEvent {
 
     }
 
-    public static class SecondTestEvent extends TestEvent {
+    private static class SecondTestEvent extends TestEvent {
 
         private List<Object> objects;
 
@@ -167,10 +169,13 @@ public class DBObjectXStreamSerializerTest {
         }
     }
 
-    public static class TestEvent implements Serializable {
+
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private static class TestEvent implements Serializable {
 
         private static final long serialVersionUID = 1L;
         private String name;
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         private List<String> someListOfString;
         private LocalDate date;
         private Instant dateTime;
@@ -191,7 +196,7 @@ public class DBObjectXStreamSerializerTest {
         }
     }
 
-    public static class TestEventWithEnumSet extends TestEvent {
+    private static class TestEventWithEnumSet extends TestEvent {
 
         private Set<SomeEnum> enumSet;
 
@@ -202,7 +207,13 @@ public class DBObjectXStreamSerializerTest {
 
 
         private enum SomeEnum {
-            FIRST, SECOND, THIRD
+            FIRST,
+            SECOND,
+            @SuppressWarnings("unused") THIRD
         }
+    }
+
+    private static class StubDomainEvent implements Serializable {
+
     }
 }

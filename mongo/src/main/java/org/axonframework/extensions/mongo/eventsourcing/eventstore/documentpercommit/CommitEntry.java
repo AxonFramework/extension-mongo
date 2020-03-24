@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import static org.axonframework.common.DateTimeUtils.formatInstant;
  * UnitOfWork commit.
  *
  * @author Rene de Waele
+ * @since 3.0
  */
 public class CommitEntry {
 
@@ -52,8 +53,8 @@ public class CommitEntry {
      * @param events     The events contained in this commit
      */
     public CommitEntry(List<? extends DomainEventMessage<?>> events, Serializer serializer) {
-        DomainEventMessage firstEvent = events.get(0);
-        DomainEventMessage lastEvent = events.get(events.size() - 1);
+        DomainEventMessage<?> firstEvent = events.get(0);
+        DomainEventMessage<?> lastEvent = events.get(events.size() - 1);
         firstSequenceNumber = firstEvent.getSequenceNumber();
         firstTimestamp = formatInstant(firstEvent.getTimestamp());
         lastTimestamp = formatInstant(lastEvent.getTimestamp());
@@ -63,7 +64,7 @@ public class CommitEntry {
         aggregateType = lastEvent.getType();
         eventEntries = new EventEntry[events.size()];
         for (int i = 0, eventsLength = events.size(); i < eventsLength; i++) {
-            DomainEventMessage event = events.get(i);
+            DomainEventMessage<?> event = events.get(i);
             eventEntries[i] = new EventEntry(event, serializer);
         }
     }
@@ -126,5 +127,4 @@ public class CommitEntry {
                 .append(eventConfiguration.typeProperty(), aggregateType)
                 .append(commitConfiguration.eventsProperty(), events);
     }
-
 }

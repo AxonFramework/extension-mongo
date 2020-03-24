@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import org.axonframework.eventhandling.DomainEventMessage;
 import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventsourcing.eventstore.BatchingEventStorageEngineTest;
-import org.junit.*;
+import org.junit.jupiter.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +32,7 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test for {@link MongoEventStorageEngine} tests.
@@ -38,8 +41,23 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractMongoEventStorageEngineTest extends BatchingEventStorageEngineTest {
 
+    static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     private MongoEventStorageEngine testSubject;
 
+    @Test
+    @Override
+    public void testUniqueKeyConstraintOnEventIdentifier() {
+        logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
+    }
+
+    @Test
+    @Override
+    public void testUniqueKeyConstraintOnFirstEventIdentifierThrowsAggregateIdentifierAlreadyExistsException() {
+        logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
+    }
+
+    @Test
     @Override
     public void testCreateTailToken() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:10.00Z"));
@@ -59,8 +77,8 @@ public abstract class AbstractMongoEventStorageEngineTest extends BatchingEventS
         assertEventStreamsById(Arrays.asList(event1, event3, event2), readEvents);
     }
 
-    @Override
     @Test
+    @Override
     public void testCreateTokenAt() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:00.01Z"));
         testSubject.appendEvents(event1);
@@ -79,10 +97,9 @@ public abstract class AbstractMongoEventStorageEngineTest extends BatchingEventS
         assertEventStreamsById(Arrays.asList(event3, event2), readEvents);
     }
 
-    @Override
     @Test
+    @Override
     public void testCreateTokenAtExactTime() {
-
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.01Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:35.00Z"));
@@ -97,9 +114,9 @@ public abstract class AbstractMongoEventStorageEngineTest extends BatchingEventS
         assertEventStreamsById(Arrays.asList(event1, event3, event2), readEvents);
     }
 
+    @Test
     @Override
     public void testCreateTokenWithUnorderedEvents() {
-
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:50.00Z"));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,11 @@ import java.util.stream.Stream;
 /**
  * Implementation of a Mongo {@link StorageStrategy} that stores one {@link Document} per commit of a batch of events.
  * <p>
- * For instance, one command commonly gives rise to more than one event. Using this strategt all events for that single
+ * For instance, one command commonly gives rise to more than one event. Using this strategy all events for that single
  * command will be grouped in a single Mongo Document.
+ *
+ * @author Rene de Waele
+ * @since 3.0
  */
 public class DocumentPerCommitStorageStrategy extends AbstractMongoEventStorageStrategy {
 
@@ -68,7 +71,7 @@ public class DocumentPerCommitStorageStrategy extends AbstractMongoEventStorageS
      *
      * @param eventConfiguration       object that configures the naming of event entry properties
      * @param commitEntryConfiguration object that configures the naming of event entry properties
-     * @param lookBackTime       the maximum time to look back when fetching new events while tracking.
+     * @param lookBackTime             the maximum time to look back when fetching new events while tracking.
      */
     public DocumentPerCommitStorageStrategy(EventEntryConfiguration eventConfiguration,
                                             CommitEntryConfiguration commitEntryConfiguration, Duration lookBackTime) {

@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2010-2016. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,7 +75,7 @@ public class EventEntryConfiguration {
     /**
      * Get the name of the property with the identifier of the event.
      *
-     * @return the name of the propery with the event identifier
+     * @return the name of the property with the event identifier
      */
     public String eventIdentifierProperty() {
         return eventIdentifierProperty;
@@ -144,6 +144,7 @@ public class EventEntryConfiguration {
         return metaDataProperty;
     }
 
+    @SuppressWarnings("unused")
     public static class Builder {
 
         private String timestampProperty = "timestamp";

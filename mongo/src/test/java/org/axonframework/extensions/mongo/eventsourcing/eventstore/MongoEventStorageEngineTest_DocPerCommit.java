@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
-import org.axonframework.extensions.mongo.MongoTemplate;
-import org.axonframework.extensions.mongo.eventhandling.saga.repository.MongoSagaStore;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
-import org.axonframework.modelling.command.ConcurrencyException;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
@@ -32,57 +27,67 @@ import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.TrackedEventData;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventsourcing.eventstore.EventStoreException;
+import org.axonframework.extensions.mongo.DefaultMongoTemplate;
+import org.axonframework.extensions.mongo.MongoTemplate;
+import org.axonframework.extensions.mongo.eventhandling.saga.repository.MongoSagaStore;
+import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
 import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
 import org.axonframework.extensions.mongo.utils.MongoLauncher;
+import org.axonframework.modelling.command.AggregateStreamCreationException;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.axonframework.spring.saga.SpringResourceInjector;
-import org.junit.*;
-import org.junit.runner.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 import static org.mockito.Mockito.*;
 
 /**
+ * Test class validating the {@link MongoEventStorageEngine} using the document-per-commit strategy.
+ *
  * @author Rene de Waele
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@DirtiesContext
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = MongoEventStorageEngineTest_DocPerCommit.TestContext.class)
-public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorageEngineTest {
-
-    private static final Logger logger = LoggerFactory.getLogger(MongoEventStorageEngineTest_DocPerCommit.class);
+class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorageEngineTest {
 
     private static MongodExecutable mongoExe;
     private static MongodProcess mongod;
 
+    @Autowired
+    private ApplicationContext context;
+    private DefaultMongoTemplate mongoTemplate;
+
     private MongoEventStorageEngine testSubject;
 
-    @BeforeClass
-    public static void start() throws IOException {
+    @BeforeAll
+    static void start() throws IOException {
         mongoExe = MongoLauncher.prepareExecutable();
         mongod = mongoExe.start();
     }
 
-    @AfterClass
-    public static void shutdown() {
+    @AfterAll
+    static void shutdown() {
         if (mongod != null) {
             mongod.stop();
         }
@@ -91,20 +96,13 @@ public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEvent
         }
     }
 
-    @Autowired
-    private ApplicationContext context;
-
-    private DefaultMongoTemplate mongoTemplate;
-
-    @SuppressWarnings("Duplicates")
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         MongoClient mongoClient = null;
         try {
             mongoClient = context.getBean(MongoClient.class);
         } catch (Exception e) {
-            logger.error("No Mongo instance found. Ignoring test.");
-            Assume.assumeNoException(e);
+            assumeTrue(true, "No Mongo instance found. Ignoring test.");
         }
         mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
         mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
@@ -113,26 +111,30 @@ public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEvent
         mongoTemplate.snapshotCollection().dropIndexes();
         testSubject = context.getBean(MongoEventStorageEngine.class);
         setTestSubject(testSubject);
-        testSubject.ensureIndexes();
     }
 
-    @Test
     @Override
-    public void testUniqueKeyConstraintOnEventIdentifier() {
-        logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.eventCollection().dropIndexes();
+        mongoTemplate.snapshotCollection().dropIndexes();
+        mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
+        mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
     }
 
     @Test
-    public void testFetchHighestSequenceNumber() {
+    void testFetchHighestSequenceNumber() {
         testSubject.appendEvents(createEvent(0), createEvent(1));
         testSubject.appendEvents(createEvent(2), createEvent(3));
 
-        assertEquals(3, (long) testSubject.lastSequenceNumberFor(AGGREGATE).get());
-        assertFalse(testSubject.lastSequenceNumberFor("notexist").isPresent());
+        Optional<Long> optionalLastSequence = testSubject.lastSequenceNumberFor(AGGREGATE);
+        assertTrue(optionalLastSequence.isPresent());
+        assertEquals(3L, optionalLastSequence.get());
+        assertFalse(testSubject.lastSequenceNumberFor("not-exist").isPresent());
     }
 
     @Test
-    public void testFetchingEventsReturnsResultsWhenMoreThanBatchSizeCommitsAreAvailable() {
+    void testFetchingEventsReturnsResultsWhenMoreThanBatchSizeCommitsAreAvailable() {
         testSubject.appendEvents(createEvent(0), createEvent(1), createEvent(2));
         testSubject.appendEvents(createEvent(3), createEvent(4), createEvent(5));
         testSubject.appendEvents(createEvent(6), createEvent(7), createEvent(8));
@@ -140,16 +142,16 @@ public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEvent
         testSubject.appendEvents(createEvent(12), createEvent(13), createEvent(14));
 
         List<? extends TrackedEventData<?>> result = testSubject.fetchTrackedEvents(null, 2);
-        TrackedEventData<?> last = result.get(result.size() - 1);// we decide to omit the last event
+        TrackedEventData<?> last = result.get(result.size() - 1); // We decide to omit the last event
         last.trackingToken();
         List<? extends TrackedEventData<?>> actual = testSubject.fetchTrackedEvents(last.trackingToken(), 2);
-        assertFalse("Expected to retrieve some events", actual.isEmpty());
-        // we want to make sure we get the first event from the next commit
+        assertFalse(actual.isEmpty(), "Expected to retrieve some events");
+        // We want to make sure we get the first event from the next commit
         assertEquals(result.size(), ((DomainEventData<?>) actual.get(0)).getSequenceNumber());
     }
 
     @Test
-    public void testFetchingEventsReturnsResultsWhenMoreThanBatchSizeCommitsAreAvailable_PartiallyReadingCommit() {
+    void testFetchingEventsReturnsResultsWhenMoreThanBatchSizeCommitsAreAvailable_PartiallyReadingCommit() {
         testSubject.appendEvents(createEvent(0), createEvent(1), createEvent(2));
         testSubject.appendEvents(createEvent(3), createEvent(4), createEvent(5));
         testSubject.appendEvents(createEvent(6), createEvent(7), createEvent(8));
@@ -157,28 +159,38 @@ public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEvent
         testSubject.appendEvents(createEvent(12), createEvent(13), createEvent(14));
 
         List<? extends TrackedEventData<?>> result = testSubject.fetchTrackedEvents(null, 2);
-        TrackedEventData<?> last = result.get(result.size() - 2);// we decide to omit the last event
+        TrackedEventData<?> last = result.get(result.size() - 2); // We decide to omit the last event
         last.trackingToken();
         List<? extends TrackedEventData<?>> actual = testSubject.fetchTrackedEvents(last.trackingToken(), 2);
-        assertFalse("Expected to retrieve some events", actual.isEmpty());
-        // we want to make sure we get the last event from the commit
+        assertFalse(actual.isEmpty(), "Expected to retrieve some events");
+        // We want to make sure we get the last event from the commit
         assertEquals(result.size() - 1, ((DomainEventData<?>) actual.get(0)).getSequenceNumber());
     }
 
-    @Test(expected = ConcurrencyException.class)
+    @Test
     @Override
-    public void testStoreDuplicateEventWithoutExceptionResolver() {
-        testSubject.appendEvents(createEvent(0));
-        testSubject.appendEvents(createEvent(0));
+    public void testStoreDuplicateFirstEventWithExceptionTranslatorThrowsAggregateIdentifierAlreadyExistsException() {
+        logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
     }
 
-    @DirtiesContext
-    @Test(expected = EventStoreException.class)
+    @Test
     @Override
-    public void testStoreDuplicateEventWithExceptionTranslator() {
+    public void testStoreDuplicateEventWithoutExceptionResolver() {
         testSubject = createEngine((PersistenceExceptionResolver) null);
-        testSubject.appendEvents(createEvent(0));
-        testSubject.appendEvents(createEvent(0));
+        assertThrows(EventStoreException.class, () -> {
+            testSubject.appendEvents(createEvent(0));
+            testSubject.appendEvents(createEvent(0));
+        });
+    }
+
+    @Test
+    @Override
+    @DirtiesContext
+    public void testStoreDuplicateEventWithExceptionTranslator() {
+        assertThrows(AggregateStreamCreationException.class, () -> {
+            testSubject.appendEvents(createEvent(0));
+            testSubject.appendEvents(createEvent(0));
+        });
     }
 
     @Override
@@ -217,7 +229,6 @@ public class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEvent
 
     @Override
     public void testCreateTokenWithUnorderedEvents() {
-
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:46.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:50.00Z"));

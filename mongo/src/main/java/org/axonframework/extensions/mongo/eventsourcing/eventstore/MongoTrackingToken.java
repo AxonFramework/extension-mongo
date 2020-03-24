@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ import static java.util.Collections.unmodifiableSet;
  * event stream. Order is determined by comparing timestamp, sequence number and event id.
  * <p>
  * This tracking token implementation keeps track of all events retrieved in a period of time before the furthest
- * position in the stream. This makes it possible to detect event entries that have a lower timestamp than that
- * with the highest timestamp but are published at a later time (due to time differences between nodes).
+ * position in the stream. This makes it possible to detect event entries that have a lower timestamp than that with the
+ * highest timestamp but are published at a later time (due to time differences between nodes).
  *
  * @author Rene de Waele
  * @since 3.0
@@ -144,8 +144,8 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
 
     /**
      * Returns an {@link Iterable} with all known identifiers of events tracked before and including this token. Note,
-     * the token only stores ids of prior events if they are not too old, see
-     * {@link #advanceTo(Instant, String, Duration)}.
+     * the token only stores ids of prior events if they are not too old, see {@link #advanceTo(Instant, String,
+     * Duration)}.
      *
      * @return all known event identifiers
      */
@@ -179,6 +179,7 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public TrackingToken lowerBound(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
+        //noinspection ConstantConditions
         MongoTrackingToken otherToken = (MongoTrackingToken) other;
 
         Map<String, Long> intersection = new HashMap<>(this.trackedEvents);
@@ -193,8 +194,10 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public TrackingToken upperBound(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
-        Long timestamp = max(((MongoTrackingToken) other).timestamp, this.timestamp);
+        //noinspection ConstantConditions
+        long timestamp = max(((MongoTrackingToken) other).timestamp, this.timestamp);
         Map<String, Long> events = new HashMap<>(trackedEvents);
+        //noinspection ConstantConditions
         events.putAll(((MongoTrackingToken) other).trackedEvents);
         return new MongoTrackingToken(timestamp, events);
     }
@@ -202,6 +205,7 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public boolean covers(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
+        //noinspection ConstantConditions
         MongoTrackingToken otherToken = (MongoTrackingToken) other;
 
         long oldest = this.trackedEvents.values().stream().min(Comparator.naturalOrder()).orElse(0L);

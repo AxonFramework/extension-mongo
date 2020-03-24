@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ import static org.axonframework.common.DateTimeUtils.formatInstant;
 
 /**
  * Implementation of a serialized event message that can be used to create a Mongo document.
+ *
+ * @author Rene de Waele
+ * @since 3.0
  */
 public class EventEntry implements DomainEventData<Object> {
 
@@ -131,13 +134,13 @@ public class EventEntry implements DomainEventData<Object> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public SerializedObject<Object> getMetaData() {
         return new SerializedMetaData(serializedMetaData, getRepresentationType());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public SerializedObject<Object> getPayload() {
         return new SimpleSerializedObject(serializedPayload, getRepresentationType(), payloadType, payloadRevision);
     }

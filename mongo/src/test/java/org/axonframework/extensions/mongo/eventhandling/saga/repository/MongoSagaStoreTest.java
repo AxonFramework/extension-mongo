@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,26 +23,24 @@ import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.extensions.mongo.DefaultMongoTemplate;
 import org.axonframework.extensions.mongo.MongoTemplate;
+import org.axonframework.extensions.mongo.MongoTestContext;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
+import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.modelling.saga.AssociationValue;
 import org.axonframework.modelling.saga.AssociationValues;
 import org.axonframework.modelling.saga.AssociationValuesImpl;
 import org.axonframework.modelling.saga.repository.SagaStore;
-import org.axonframework.extensions.mongo.MongoTestContext;
-import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.*;
-import org.junit.runner.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.Set;
@@ -51,16 +49,17 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 /**
+ * Test class validating the {@link MongoSagaStore}.
+ *
  * @author Jettro Coenradie
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = MongoTestContext.class)
-public class MongoSagaStoreTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(MongoSagaStoreTest.class);
+class MongoSagaStoreTest {
 
     private static MongodProcess mongod;
     private static MongodExecutable mongoExe;
@@ -75,8 +74,8 @@ public class MongoSagaStoreTest {
     @Autowired
     private ApplicationContext context;
 
-    @BeforeClass
-    public static void start() throws IOException {
+    @BeforeAll
+    static void start() throws IOException {
         mongoExe = MongoLauncher.prepareExecutable();
         mongod = mongoExe.start();
         if (mongod == null) {
@@ -87,8 +86,8 @@ public class MongoSagaStoreTest {
         }
     }
 
-    @AfterClass
-    public static void shutdown() {
+    @AfterAll
+    static void shutdown() {
         if (mongod != null) {
             mongod.stop();
         }
@@ -97,21 +96,20 @@ public class MongoSagaStoreTest {
         }
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         try {
             context.getBean(Mongo.class);
             context.getBean(MongoEventStorageEngine.class);
         } catch (Exception e) {
-            logger.error("No Mongo instance found. Ignoring test.");
-            Assume.assumeNoException(e);
+            assumeTrue(true, "No Mongo instance found. Ignoring test.");
         }
         mongoTemplate.sagaCollection().drop();
     }
 
-    @DirtiesContext
     @Test
-    public void testLoadSagaOfDifferentTypesWithSameAssociationValue_SagaFound() {
+    @DirtiesContext
+    void testLoadSagaOfDifferentTypesWithSameAssociationValue_SagaFound() {
         MyTestSaga testSaga = new MyTestSaga();
         MyOtherTestSaga otherTestSaga = new MyOtherTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
@@ -134,27 +132,27 @@ public class MongoSagaStoreTest {
         Bson sagaQuery = SagaEntry.queryByIdentifier("test1");
         FindIterable<Document> sagaCursor = mongoTemplate.sagaCollection().find(sagaQuery);
         assertEquals(
-                "Amount of found sagas is not as expected",
                 1,
-                StreamSupport.stream(sagaCursor.spliterator(), false).count()
+                StreamSupport.stream(sagaCursor.spliterator(), false).count(),
+                "Amount of found sagas is not as expected"
         );
     }
 
-    @DirtiesContext
     @Test
-    public void testLoadSagaOfDifferentTypesWithSameAssociationValue_NoSagaFound() {
+    @DirtiesContext
+    void testLoadSagaOfDifferentTypesWithSameAssociationValue_NoSagaFound() {
         MyTestSaga testSaga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
         MyOtherTestSaga otherTestSaga = new MyOtherTestSaga();
         sagaStore.insertSaga(MyTestSaga.class, "test1", testSaga, singleton(associationValue));
         sagaStore.insertSaga(MyTestSaga.class, "test2", otherTestSaga, singleton(associationValue));
         Set<String> actual = sagaStore.findSagas(NonExistentSaga.class, new AssociationValue("key", "value"));
-        assertTrue("Didn't expect any sagas", actual.isEmpty());
+        assertTrue(actual.isEmpty(), "Didn't expect any sagas");
     }
 
     @Test
     @DirtiesContext
-    public void testLoadSagaOfDifferentTypesWithSameAssociationValue_SagaDeleted() {
+    void testLoadSagaOfDifferentTypesWithSameAssociationValue_SagaDeleted() {
         MyTestSaga testSaga = new MyTestSaga();
         MyOtherTestSaga otherTestSaga = new MyOtherTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
@@ -163,20 +161,20 @@ public class MongoSagaStoreTest {
         sagaStore.insertSaga(MyTestSaga.class, "test2", otherTestSaga, singleton(associationValue));
         sagaStore.deleteSaga(MyTestSaga.class, "test1", singleton(associationValue));
         Set<String> actual = sagaStore.findSagas(MyTestSaga.class, associationValue);
-        assertTrue("Didn't expect any sagas", actual.isEmpty());
+        assertTrue(actual.isEmpty(), "Didn't expect any sagas");
 
         Bson sagaQuery = SagaEntry.queryByIdentifier("test1");
         FindIterable<Document> sagaCursor = mongoTemplate.sagaCollection().find(sagaQuery);
         assertEquals(
-                "No saga is expected after .end and .commit",
                 0,
-                StreamSupport.stream(sagaCursor.spliterator(), false).count()
+                StreamSupport.stream(sagaCursor.spliterator(), false).count(),
+                "No saga is expected after .end and .commit"
         );
     }
 
-    @DirtiesContext
     @Test
-    public void testAddAndLoadSaga_ByIdentifier() {
+    @DirtiesContext
+    void testAddAndLoadSaga_ByIdentifier() {
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
         sagaStore.insertSaga(MyTestSaga.class, "test1", saga, singleton(associationValue));
@@ -186,9 +184,9 @@ public class MongoSagaStoreTest {
         assertNotNull(mongoTemplate.sagaCollection().find(SagaEntry.queryByIdentifier("test1")));
     }
 
-    @DirtiesContext
     @Test
-    public void testAddAndLoadSaga_ByAssociationValue() {
+    @DirtiesContext
+    void testAddAndLoadSaga_ByAssociationValue() {
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
         sagaStore.insertSaga(MyTestSaga.class, "test1", saga, singleton(associationValue));
@@ -199,10 +197,9 @@ public class MongoSagaStoreTest {
         assertNotNull(mongoTemplate.sagaCollection().find(SagaEntry.queryByIdentifier("test1")));
     }
 
-    @SuppressWarnings("UnusedAssignment")
     @Test
     @DirtiesContext
-    public void testAddAndLoadSaga_MultipleHitsByAssociationValue() {
+    void testAddAndLoadSaga_MultipleHitsByAssociationValue() {
         String identifier1 = UUID.randomUUID().toString();
         String identifier2 = UUID.randomUUID().toString();
         MyTestSaga saga1 = new MyTestSaga();
@@ -229,7 +226,7 @@ public class MongoSagaStoreTest {
 
     @Test
     @DirtiesContext
-    public void testAddAndLoadSaga_AssociateValueAfterStorage() {
+    void testAddAndLoadSaga_AssociateValueAfterStorage() {
         AssociationValue associationValue = new AssociationValue("key", "value");
         String identifier = UUID.randomUUID().toString();
         MyTestSaga saga = new MyTestSaga();
@@ -243,13 +240,13 @@ public class MongoSagaStoreTest {
     }
 
     @Test
-    public void testLoadSaga_NotFound() {
+    void testLoadSaga_NotFound() {
         assertNull(sagaStore.loadSaga(MyTestSaga.class, "123456"));
     }
 
-    @DirtiesContext
     @Test
-    public void testLoadSaga_AssociationValueRemoved() {
+    @DirtiesContext
+    void testLoadSaga_AssociationValueRemoved() {
         String identifier = UUID.randomUUID().toString();
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
@@ -266,9 +263,9 @@ public class MongoSagaStoreTest {
         assertEquals(0, found.size());
     }
 
-    @DirtiesContext
     @Test
-    public void testSaveSaga() {
+    @DirtiesContext
+    void testSaveSaga() {
         String identifier = UUID.randomUUID().toString();
         MyTestSaga saga = new MyTestSaga();
         XStreamSerializer serializer = XStreamSerializer.builder().build();
@@ -281,17 +278,17 @@ public class MongoSagaStoreTest {
                              loaded.saga(),
                              new AssociationValuesImpl(loaded.associationValues()));
 
-        SagaEntry entry = new SagaEntry(mongoTemplate.sagaCollection()
-                                                     .find(SagaEntry.queryByIdentifier(identifier))
-                                                     .first());
-        MyTestSaga actualSaga = (MyTestSaga) entry.getSaga(serializer);
+        SagaEntry<MyTestSaga> entry = new SagaEntry<>(mongoTemplate.sagaCollection()
+                                                                   .find(SagaEntry.queryByIdentifier(identifier))
+                                                                   .first());
+        MyTestSaga actualSaga = entry.getSaga(serializer);
         assertNotSame(loaded, actualSaga);
         assertEquals(1, actualSaga.counter);
     }
 
-    @DirtiesContext
     @Test
-    public void testEndSaga() {
+    @DirtiesContext
+    void testEndSaga() {
         String identifier = UUID.randomUUID().toString();
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
@@ -313,7 +310,7 @@ public class MongoSagaStoreTest {
 
     }
 
-    private class NonExistentSaga {
+    private static class NonExistentSaga {
 
     }
 }

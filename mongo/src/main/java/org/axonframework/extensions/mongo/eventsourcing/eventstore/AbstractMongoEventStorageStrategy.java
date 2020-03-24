@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import static org.axonframework.common.ObjectUtils.getOrDefault;
  * events and snapshots into Documents and vice versa.
  *
  * @author Rene de Waele
+ * @since 3.0
  */
 public abstract class AbstractMongoEventStorageStrategy implements StorageStrategy {
 
@@ -109,9 +110,14 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
     @Override
     public void appendSnapshot(MongoCollection<Document> snapshotCollection, DomainEventMessage<?> snapshot,
                                Serializer serializer) {
-        snapshotCollection.findOneAndReplace(new BsonDocument(eventConfiguration.aggregateIdentifierProperty(), new BsonString(snapshot.getAggregateIdentifier())),
-                                             createSnapshotDocument(snapshot, serializer),
-                                             new FindOneAndReplaceOptions().upsert(true));
+        snapshotCollection.findOneAndReplace(
+                new BsonDocument(
+                        eventConfiguration.aggregateIdentifierProperty(),
+                        new BsonString(snapshot.getAggregateIdentifier())
+                ),
+                createSnapshotDocument(snapshot, serializer),
+                new FindOneAndReplaceOptions().upsert(true)
+        );
     }
 
     /**
@@ -141,7 +147,8 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
                 .sort(new BasicDBObject(eventConfiguration().sequenceNumberProperty(), ORDER_ASC));
         cursor = cursor.batchSize(batchSize);
         return stream(cursor.spliterator(), false).flatMap(this::extractEvents)
-                                                  .filter(event -> event.getSequenceNumber() >= firstSequenceNumber).collect(Collectors.toList());
+                                                  .filter(event -> event.getSequenceNumber() >= firstSequenceNumber)
+                                                  .collect(Collectors.toList());
     }
 
     /**
@@ -161,6 +168,7 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
         } else {
             Assert.isTrue(lastToken instanceof MongoTrackingToken,
                           () -> String.format("Token %s is of the wrong type", lastToken));
+            //noinspection ConstantConditions
             MongoTrackingToken trackingToken = (MongoTrackingToken) lastToken;
             cursor = eventCollection.find(and(gte(eventConfiguration.timestampProperty(),
                                                   formatInstant(trackingToken.getTimestamp().minus(lookBackTime))),
@@ -170,12 +178,14 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
         cursor = cursor.sort(new BasicDBObject(eventConfiguration().timestampProperty(), ORDER_ASC)
                                      .append(eventConfiguration().sequenceNumberProperty(), ORDER_ASC));
         cursor = cursor.batchSize(batchSize);
+        //noinspection ConstantConditions
         AtomicReference<MongoTrackingToken> previousToken = new AtomicReference<>((MongoTrackingToken) lastToken);
         List<TrackedEventData<?>> results = new ArrayList<>();
         for (MongoCursor<Document> iterator = cursor.iterator(); results.size() < batchSize && iterator.hasNext(); ) {
             Document document = iterator.next();
             extractEvents(document)
-                    .filter(ed -> previousToken.get() == null || !previousToken.get().getKnownEventIds().contains(ed.getEventIdentifier()))
+                    .filter(ed -> previousToken.get() == null
+                            || !previousToken.get().getKnownEventIds().contains(ed.getEventIdentifier()))
                     .map(event -> new TrackedMongoEventEntry<>(event, previousToken.updateAndGet(
                             token -> token == null
                                     ? MongoTrackingToken.of(event.getTimestamp(), event.getEventIdentifier())
@@ -195,10 +205,12 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
     }
 
     @Override
-    public Optional<Long> lastSequenceNumberFor(MongoCollection<Document> eventsCollection, String aggregateIdentifier) {
-        Document lastDocument = eventsCollection.find(eq(eventConfiguration.aggregateIdentifierProperty(), aggregateIdentifier))
-                                                .sort(descending(eventConfiguration.sequenceNumberProperty()))
-                                                .first();
+    public Optional<Long> lastSequenceNumberFor(MongoCollection<Document> eventsCollection,
+                                                String aggregateIdentifier) {
+        Document lastDocument =
+                eventsCollection.find(eq(eventConfiguration.aggregateIdentifierProperty(), aggregateIdentifier))
+                                .sort(descending(eventConfiguration.sequenceNumberProperty()))
+                                .first();
         return Optional.ofNullable(lastDocument).map(this::extractHighestSequenceNumber);
     }
 
