@@ -16,7 +16,7 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
-import com.mongodb.Mongo;
+import com.mongodb.client.MongoClient;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +31,7 @@ class MongoFactoryTest {
     @Test
     void createMongoInstance() {
         MongoFactory mongoFactory = new MongoFactory();
-        Mongo mongoInstance = mongoFactory.createMongo();
+        MongoClient mongoInstance = mongoFactory.createMongo();
 
         assertNotNull(mongoInstance);
     }

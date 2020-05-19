@@ -16,9 +16,19 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
-import com.mongodb.MongoClientOptions;
+import com.mongodb.Block;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.SocketSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -33,10 +43,12 @@ public class MongoOptionsFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoOptionsFactory.class);
 
-    private final MongoClientOptions defaults;
+    private final MongoClientSettings defaults;
+    private List<ServerAddress> mongoAddresses = Collections.emptyList();
+    private WriteConcern writeConcern;
     private int connectionsPerHost;
     private int connectionTimeout;
-    private int maxWaitTime;
+    private long maxWaitTime;
     private int threadsAllowedToBlockForConnectionMultiplier;
     private int socketTimeOut;
 
@@ -44,7 +56,7 @@ public class MongoOptionsFactory {
      * Default constructor for the factory that initializes the defaults.
      */
     public MongoOptionsFactory() {
-        defaults = MongoClientOptions.builder().build();
+        defaults = MongoClientSettings.builder().build();
     }
 
     /**
@@ -52,22 +64,23 @@ public class MongoOptionsFactory {
      *
      * @return MongoOptions instance based on the configured properties
      */
-    public MongoClientOptions createMongoOptions() {
-        MongoClientOptions options = MongoClientOptions.builder()
-                .connectionsPerHost(getConnectionsPerHost())
-                .connectTimeout(getConnectionTimeout())
-                .maxWaitTime(getMaxWaitTime())
-                .threadsAllowedToBlockForConnectionMultiplier(getThreadsAllowedToBlockForConnectionMultiplier())
-                .socketTimeout(getSocketTimeOut()).build();
+    public MongoClientSettings createMongoOptions() {
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToConnectionPoolSettings(builder -> builder.maxWaitTime(getMaxWaitTime(), TimeUnit.MILLISECONDS).maxSize(getConnectionsPerHost()))
+                .applyToClusterSettings(builder -> builder.hosts(mongoAddresses))
+                .applyToSocketSettings(builder -> builder.connectTimeout(getSocketTimeOut(), TimeUnit.MILLISECONDS))
+                .writeConcern(defaultWriteConcern())
+                .build();
+
         if (logger.isDebugEnabled()) {
             logger.debug("Mongo Options");
-            logger.debug("Connections per host :{}", options.getConnectionsPerHost());
-            logger.debug("Connection timeout : {}", options.getConnectTimeout());
-            logger.debug("Max wait timeout : {}", options.getMaxWaitTime());
-            logger.debug("Threads allowed to block : {}", options.getThreadsAllowedToBlockForConnectionMultiplier());
-            logger.debug("Socket timeout : {}", options.getSocketTimeout());
+            logger.debug("Connections per host :{}", settings.getConnectionPoolSettings().getMaxSize());
+            logger.debug("Connection timeout : {}", settings.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
+            logger.debug("Max wait timeout : {}", settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
+            logger.debug("Socket timeout : {}", settings.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
         }
-        return options;
+
+        return settings;
     }
 
     /**
@@ -76,7 +89,7 @@ public class MongoOptionsFactory {
      * @return number representing the connections per host
      */
     public int getConnectionsPerHost() {
-        return (connectionsPerHost > 0) ? connectionsPerHost : defaults.getConnectionsPerHost();
+        return (connectionsPerHost > 0) ? connectionsPerHost : defaults.getConnectionPoolSettings().getMaxSize();
     }
 
     /**
@@ -94,7 +107,7 @@ public class MongoOptionsFactory {
      * @return number representing milli seconds of timeout
      */
     public int getConnectionTimeout() {
-        return (connectionTimeout > 0) ? connectionTimeout : defaults.getConnectTimeout();
+        return (connectionTimeout > 0) ? connectionTimeout : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -111,8 +124,8 @@ public class MongoOptionsFactory {
      *
      * @return number of milli seconds the thread waits for a connection
      */
-    public int getMaxWaitTime() {
-        return (maxWaitTime > 0) ? maxWaitTime : defaults.getMaxWaitTime();
+    public long getMaxWaitTime() {
+        return (maxWaitTime > 0) ? maxWaitTime : defaults.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -120,7 +133,7 @@ public class MongoOptionsFactory {
      *
      * @param maxWaitTime number representing the number of milli seconds to wait for a thread
      */
-    public void setMaxWaitTime(int maxWaitTime) {
+    public void setMaxWaitTime(long maxWaitTime) {
         this.maxWaitTime = maxWaitTime;
     }
 
@@ -130,7 +143,7 @@ public class MongoOptionsFactory {
      * @return Number representing the amount of milli seconds to wait for a socket connection
      */
     public int getSocketTimeOut() {
-        return (socketTimeOut > 0) ? socketTimeOut : defaults.getSocketTimeout();
+        return (socketTimeOut > 0) ? socketTimeOut : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -147,12 +160,13 @@ public class MongoOptionsFactory {
      *
      * @return Number representing the multiplier of maximum allowed blocked connections in relation to the maximum
      *         allowed connections
+     * @deprecated in the next major release, wait queue size limitations will be removed
      */
-    public int getThreadsAllowedToBlockForConnectionMultiplier() {
-        return (threadsAllowedToBlockForConnectionMultiplier > 0)
-                ? threadsAllowedToBlockForConnectionMultiplier
-                : defaults.getThreadsAllowedToBlockForConnectionMultiplier();
-    }
+//    public int getThreadsAllowedToBlockForConnectionMultiplier() {
+//        return (threadsAllowedToBlockForConnectionMultiplier > 0)
+//                ? threadsAllowedToBlockForConnectionMultiplier
+//                : defaults.getThreadsAllowedToBlockForConnectionMultiplier();
+//    }
 
     /**
      * Set the multiplier for the amount of threads to block in relation to the maximum amount of connections.
@@ -160,8 +174,52 @@ public class MongoOptionsFactory {
      * @param threadsAllowedToBlockForConnectionMultiplier
      *            Number representing the multiplier of the amount of threads to block in relation to the connections
      *            that are allowed.
+     * @deprecated in the next major release, wait queue size limitations will be removed
      */
-    public void setThreadsAllowedToBlockForConnectionMultiplier(int threadsAllowedToBlockForConnectionMultiplier) {
-        this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
+//    public void setThreadsAllowedToBlockForConnectionMultiplier(int threadsAllowedToBlockForConnectionMultiplier) {
+//        this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
+//    }
+    /**
+     * Provide a list of ServerAddress objects to use for locating the Mongo replica set. An empty list will result in
+     * a single Mongo instance being used on the default host ({@code 127.0.0.1}) and port
+     * (<code>{@code com.mongodb.ServerAddress#defaultPort}</code>)
+     * <p/>
+     * Defaults to an empty list, which locates a single Mongo instance on the default host ({@code 127.0.0.1})
+     * and port <code>({@code com.mongodb.ServerAddress#defaultPort})</code>
+     *
+     * @param mongoAddresses List of ServerAddress instances
+     */
+    public void setMongoAddresses(List<ServerAddress> mongoAddresses) {
+        this.mongoAddresses = mongoAddresses;
     }
+
+    /**
+     * Provided a write concern to be used by the mongo instance. The provided concern should be compatible with the
+     * number of addresses provided with {@link #setMongoAddresses(java.util.List)}. For example, providing
+     * {@link WriteConcern#W2} in combination with a single address will cause each write operation to hang.
+     * <p/>
+     * While safe (e.g. {@link WriteConcern#W2}) WriteConcerns allow you to detect concurrency issues
+     * immediately, you might want to use a more relaxed write concern if you have other mechanisms in place to ensure
+     * consistency.
+     * <p/>
+     * Defaults to {@link WriteConcern#W2} if you provided more than one address with
+     * {@link #setMongoAddresses(java.util.List)}, or {@link WriteConcern#JOURNALED} if there is only one address (or
+     * none at all).
+     *
+     * @param writeConcern WriteConcern to use for the connections
+     */
+    public void setWriteConcern(WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
+    }
+
+    private WriteConcern defaultWriteConcern() {
+        if (writeConcern != null) {
+            return this.writeConcern;
+        } else if (mongoAddresses.size() > 1) {
+            return WriteConcern.W2;
+        } else {
+            return WriteConcern.JOURNALED;
+        }
+    }
+
 }

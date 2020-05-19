@@ -16,7 +16,7 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import de.flapdoodle.embed.mongo.MongodExecutable;

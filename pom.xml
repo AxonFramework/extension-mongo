@@ -405,6 +405,13 @@
     </build>
 
     <repositories>
+        <!-- Maven repository -->
+<!--        <repository>-->
+<!--            <id>maven</id>-->
+<!--            <name>Maven repo</name>-->
+<!--            <url>https://repo.maven.apache.org/maven2/</url>-->
+<!--        </repository>-->
+
         <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>

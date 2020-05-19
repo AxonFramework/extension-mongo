@@ -1,6 +1,6 @@
 package org.axonframework.extensions.mongo;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import org.axonframework.extensions.mongo.eventhandling.saga.repository.MongoSagaStore;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoFactory;
