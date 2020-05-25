@@ -25,7 +25,7 @@ cache:
 
 script:
   - mvn -version
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -B -Dsonar.projectKey=AxonFramework_extension-amqp
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -B -Dsonar.projectKey=AxonFramework_extension-mongo
   - JAVA_HOME=$(dirname ${JAVA_HOME})/openjdk11 mvn -version
   - JAVA_HOME=$(dirname ${JAVA_HOME})/openjdk11 mvn clean verify -B
 
