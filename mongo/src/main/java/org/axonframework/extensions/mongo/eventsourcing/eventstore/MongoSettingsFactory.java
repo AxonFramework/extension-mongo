@@ -65,7 +65,7 @@ public class MongoSettingsFactory {
      *
      * @return MongoOptions instance based on the configured properties
      */
-    public MongoClientSettings createMongoOptions() {
+    public MongoClientSettings createMongoClientSettings() {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyToConnectionPoolSettings(builder -> builder.maxWaitTime(getMaxWaitTime(), TimeUnit.MILLISECONDS).maxSize(getConnectionsPerHost()))
                 .applyToClusterSettings(builder -> builder.hosts(mongoAddresses))
@@ -156,30 +156,6 @@ public class MongoSettingsFactory {
         this.socketTimeOut = socketTimeOut;
     }
 
-    /**
-     * Getter for the amount of threads that block in relation to the amount of possible connections.
-     *
-     * @return Number representing the multiplier of maximum allowed blocked connections in relation to the maximum
-     *         allowed connections
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-//    public int getThreadsAllowedToBlockForConnectionMultiplier() {
-//        return (threadsAllowedToBlockForConnectionMultiplier > 0)
-//                ? threadsAllowedToBlockForConnectionMultiplier
-//                : defaults.getThreadsAllowedToBlockForConnectionMultiplier();
-//    }
-
-    /**
-     * Set the multiplier for the amount of threads to block in relation to the maximum amount of connections.
-     *
-     * @param threadsAllowedToBlockForConnectionMultiplier
-     *            Number representing the multiplier of the amount of threads to block in relation to the connections
-     *            that are allowed.
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-//    public void setThreadsAllowedToBlockForConnectionMultiplier(int threadsAllowedToBlockForConnectionMultiplier) {
-//        this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
-//    }
     /**
      * Provide a list of ServerAddress objects to use for locating the Mongo replica set. An empty list will result in
      * a single Mongo instance being used on the default host ({@code 127.0.0.1}) and port

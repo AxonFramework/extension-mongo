@@ -33,7 +33,7 @@ import com.mongodb.client.MongoClients;
  */
 public class MongoFactory {
 
-    private MongoClientSettings mongoOptions = MongoClientSettings.builder().build();
+    private MongoClientSettings mongoClientSettings = MongoClientSettings.builder().build();
 
     /**
      * Creates a mongo instance based on the provided configuration. Read javadoc of the class to learn about the
@@ -42,17 +42,17 @@ public class MongoFactory {
      * @return a new Mongo instance each time this method is called.
      */
     public MongoClient createMongo() {
-        return MongoClients.create(mongoOptions);
+        return MongoClients.create(mongoClientSettings);
     }
 
     /**
-     * Provide an instance of MongoOptions to be used for the connections. Defaults to a MongoOptions with all its
+     * Provide an instance of MongoClientSettings to be used for the connections. Defaults to a MongoClientSettings with all its
      * default settings.
      *
-     * @param mongoOptions MongoOptions to overrule the default
+     * @param mongoClientSettings MongoClientSettings to overrule the default
      */
-    public void setMongoClientSettings(MongoClientSettings mongoOptions) {
-        this.mongoOptions = mongoOptions;
+    public void setMongoClientSettings(MongoClientSettings mongoClientSettings) {
+        this.mongoClientSettings = mongoClientSettings;
     }
 
 }

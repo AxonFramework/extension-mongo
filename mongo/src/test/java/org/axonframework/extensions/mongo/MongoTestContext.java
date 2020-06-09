@@ -31,14 +31,14 @@ public class MongoTestContext {
     }
 
     @Bean
-    public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoOptionsFactory) {
+    public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoSettingsFactory) {
         MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoClientSettings(mongoOptionsFactory.createMongoOptions());
+        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
         return mongoFactory;
     }
 
     @Bean
-    public MongoSettingsFactory mongoOptionsFactory() {
+    public MongoSettingsFactory mongoSettingsFactory() {
         MongoSettingsFactory mongoOptionsFactory = new MongoSettingsFactory();
         mongoOptionsFactory.setConnectionsPerHost(100);
         return mongoOptionsFactory;
