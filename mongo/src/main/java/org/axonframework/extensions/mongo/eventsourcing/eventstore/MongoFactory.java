@@ -18,21 +18,15 @@ package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClients;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Convenience class for creating Mongo instances. It helps configuring a Mongo instance with a WriteConcern safe to use
  * in combination with the given server addresses.
  * <p/>
- * Depending on the number of addresses provided, the factory defaults to either {@link WriteConcern#W2} when
- * more than one address is provided, or {@link WriteConcern#JOURNALED} when only one server is available. The idea of
- * these defaults is that data must be able to survive a (not too heavy) crash without loss of data. We wouldn't want to
- * publish untraceable events, would we...
+ *
+ * Upgrade note: Upon upgrading the MongoDb driver version from  3.x to 4.x, write concerns were moved to MongoOptionsFactory.
+ * @see MongoSettingsFactory
  *
  * @author Jettro Coenradie
  * @since 2.0 (in incubator since 0.7)
@@ -57,7 +51,7 @@ public class MongoFactory {
      *
      * @param mongoOptions MongoOptions to overrule the default
      */
-    public void setMongoOptions(MongoClientSettings mongoOptions) {
+    public void setMongoClientSettings(MongoClientSettings mongoOptions) {
         this.mongoOptions = mongoOptions;
     }
 

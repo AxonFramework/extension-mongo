@@ -24,50 +24,38 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test class validating the {@link MongoOptionsFactory}.
+ * Test class validating the {@link MongoSettingsFactory}.
  *
  * @author Jettro Coenradie
  */
-class MongoOptionsFactoryTest {
+class MongoSettingsFactoryTest {
 
-    private MongoOptionsFactory factory;
+    private MongoSettingsFactory factory;
 
     @BeforeEach
     void setUp() {
-        factory = new MongoOptionsFactory();
+        factory = new MongoSettingsFactory();
     }
 
     @Test
-    void testCreateMongoOptions_defaults() {
+    void testCreateMongoClientSettings_defaults() {
         MongoClientSettings options = factory.createMongoOptions();
         MongoClientSettings defaults = MongoClientSettings.builder().build();
 
         assertEquals(defaults.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS), options.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
         assertEquals(defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS), options.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
-        assertEquals(defaults.getConnectionPoolSettings().getMaxSize(), options.getConnectionPoolSettings().getMaxSize());
-        // TODO connect time and socket timeout is identical
-//        assertEquals(defaults.getConnectTimeout(), options.getConnectTimeout());
-        // TODO deprecated
-//        assertEquals(defaults.getThreadsAllowedToBlockForConnectionMultiplier(),
-//                     options.getThreadsAllowedToBlockForConnectionMultiplier());
     }
 
     @Test
-    void testCreateMongoOptions_customSet() {
+    void testCreateMongoClientSettings_customSet() {
         factory.setConnectionsPerHost(9);
         factory.setConnectionTimeout(11);
         factory.setMaxWaitTime(3);
         factory.setSocketTimeOut(23);
-//        factory.setThreadsAllowedToBlockForConnectionMultiplier(31);
 
         MongoClientSettings options = factory.createMongoOptions();
         assertEquals(3, options.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
         assertEquals(23, options.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
         assertEquals(9, options.getConnectionPoolSettings().getMaxSize());
-
-        // TODO connect time and socket timeout is identical
-//        assertEquals(11, options.getConnectTimeout());
-        // TODO deprecated
-//        assertEquals(31, options.getThreadsAllowedToBlockForConnectionMultiplier());
     }
 }

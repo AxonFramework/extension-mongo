@@ -276,15 +276,15 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
         }
 
         @Bean
-        public MongoFactory mongoFactoryBean(MongoOptionsFactory mongoOptionsFactory) {
+        public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoOptionsFactory) {
             MongoFactory mongoFactory = new MongoFactory();
-            mongoFactory.setMongoOptions(mongoOptionsFactory.createMongoOptions());
+            mongoFactory.setMongoClientSettings(mongoOptionsFactory.createMongoOptions());
             return mongoFactory;
         }
 
         @Bean
-        public MongoOptionsFactory mongoOptionsFactory() {
-            MongoOptionsFactory mongoOptionsFactory = new MongoOptionsFactory();
+        public MongoSettingsFactory mongoOptionsFactory() {
+            MongoSettingsFactory mongoOptionsFactory = new MongoSettingsFactory();
             mongoOptionsFactory.setConnectionsPerHost(100);
             return mongoOptionsFactory;
         }

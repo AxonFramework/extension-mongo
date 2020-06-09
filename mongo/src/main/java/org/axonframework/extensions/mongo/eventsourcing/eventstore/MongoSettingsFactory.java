@@ -16,13 +16,9 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.SocketSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,16 +28,22 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
- * Factory class used to create a {@code MongoOptions} instance. The instance makes use of the defaults as provided
+ * Factory class used to create a {@code MongoClientSettings} instance. The instance makes use of the defaults as provided
  * by the MongoOptions class. The moment you set a valid value, that value is used to create the options object.
  * </p>
+ *
+ * Note: WriteConcern enums were changed in MongoDb driver 4.x.
+ * Depending on the number of addresses provided, the factory defaults to either {@link WriteConcern#W2} when
+ * more than one address is provided, or {@link WriteConcern#JOURNALED} when only one server is available. The idea of
+ * these defaults is that data must be able to survive a (not too heavy) crash without loss of data. We wouldn't want to
+ * publish untraceable events, would we...
  *
  * @author Jettro Coenradie
  * @since 2.0 (in incubator since 0.7)
  */
-public class MongoOptionsFactory {
+public class MongoSettingsFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(MongoOptionsFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(MongoSettingsFactory.class);
 
     private final MongoClientSettings defaults;
     private List<ServerAddress> mongoAddresses = Collections.emptyList();
@@ -49,13 +51,12 @@ public class MongoOptionsFactory {
     private int connectionsPerHost;
     private int connectionTimeout;
     private long maxWaitTime;
-    private int threadsAllowedToBlockForConnectionMultiplier;
     private int socketTimeOut;
 
     /**
      * Default constructor for the factory that initializes the defaults.
      */
-    public MongoOptionsFactory() {
+    public MongoSettingsFactory() {
         defaults = MongoClientSettings.builder().build();
     }
 
