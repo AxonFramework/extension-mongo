@@ -16,9 +16,9 @@
 
 package org.axonframework.extensions.mongo.eventhandling.saga.repository;
 
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClients;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.extensions.mongo.DefaultMongoTemplate;
@@ -80,7 +80,11 @@ class MongoSagaStoreTest {
         mongod = mongoExe.start();
         if (mongod == null) {
             // we're using an existing mongo instance. Make sure it's clean
-            DefaultMongoTemplate template = DefaultMongoTemplate.builder().mongoDatabase(new MongoClient()).build();
+            MongoClient mongoClient = MongoClients.create();
+            DefaultMongoTemplate template = DefaultMongoTemplate
+                    .builder()
+                    .mongoDatabase(mongoClient)
+                    .build();
             template.eventCollection().drop();
             template.snapshotCollection().drop();
         }
@@ -99,7 +103,7 @@ class MongoSagaStoreTest {
     @BeforeEach
     void setUp() {
         try {
-            context.getBean(Mongo.class);
+            context.getBean(MongoClient.class);
             context.getBean(MongoEventStorageEngine.class);
         } catch (Exception e) {
             assumeTrue(true, "No Mongo instance found. Ignoring test.");

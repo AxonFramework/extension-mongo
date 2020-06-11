@@ -17,7 +17,7 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.WriteConcern;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
@@ -159,18 +159,19 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
         }
 
         @Bean
-        public MongoFactory mongoFactoryBean(MongoOptionsFactory mongoOptionsFactory) {
+        public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoSettingsFactory) {
             MongoFactory mongoFactory = new MongoFactory();
-            mongoFactory.setMongoOptions(mongoOptionsFactory.createMongoOptions());
-            mongoFactory.setWriteConcern(WriteConcern.JOURNALED);
+            mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
+
             return mongoFactory;
         }
 
         @Bean
-        public MongoOptionsFactory mongoOptionsFactory() {
-            MongoOptionsFactory mongoOptionsFactory = new MongoOptionsFactory();
-            mongoOptionsFactory.setConnectionsPerHost(100);
-            return mongoOptionsFactory;
+        public MongoSettingsFactory mongoSettingsFactory() {
+            MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
+            mongoSettingsFactory.setConnectionsPerHost(100);
+            mongoSettingsFactory.setWriteConcern(WriteConcern.JOURNALED);
+            return mongoSettingsFactory;
         }
 
         @Bean

@@ -17,7 +17,7 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
@@ -105,7 +105,7 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
         testSubject.storeSnapshot(createEvent(1));
         testSubject.storeSnapshot(createEvent(2));
 
-        assertEquals(1, mongoTemplate.snapshotCollection().count());
+        assertEquals(1, mongoTemplate.snapshotCollection().countDocuments());
     }
 
     @Test

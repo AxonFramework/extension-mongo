@@ -1,10 +1,10 @@
 package org.axonframework.extensions.mongo;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import org.axonframework.extensions.mongo.eventhandling.saga.repository.MongoSagaStore;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoEventStorageEngine;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoFactory;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoOptionsFactory;
+import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoSettingsFactory;
 import org.axonframework.spring.saga.SpringResourceInjector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,17 +31,17 @@ public class MongoTestContext {
     }
 
     @Bean
-    public MongoFactory mongoFactoryBean(MongoOptionsFactory mongoOptionsFactory) {
+    public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoSettingsFactory) {
         MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoOptions(mongoOptionsFactory.createMongoOptions());
+        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
         return mongoFactory;
     }
 
     @Bean
-    public MongoOptionsFactory mongoOptionsFactory() {
-        MongoOptionsFactory mongoOptionsFactory = new MongoOptionsFactory();
-        mongoOptionsFactory.setConnectionsPerHost(100);
-        return mongoOptionsFactory;
+    public MongoSettingsFactory mongoSettingsFactory() {
+        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
+        mongoSettingsFactory.setConnectionsPerHost(100);
+        return mongoSettingsFactory;
     }
 
     @Bean

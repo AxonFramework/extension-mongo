@@ -50,8 +50,8 @@
         <!-- Mongo dependencies -->
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-            <version>3.3.0</version>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>${mongo.driver.version}</version>
         </dependency>
 
         <!-- Jackson dependencies -->
