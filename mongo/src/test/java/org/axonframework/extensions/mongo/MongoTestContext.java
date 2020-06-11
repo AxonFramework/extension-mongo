@@ -39,9 +39,9 @@ public class MongoTestContext {
 
     @Bean
     public MongoSettingsFactory mongoSettingsFactory() {
-        MongoSettingsFactory mongoOptionsFactory = new MongoSettingsFactory();
-        mongoOptionsFactory.setConnectionsPerHost(100);
-        return mongoOptionsFactory;
+        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
+        mongoSettingsFactory.setConnectionsPerHost(100);
+        return mongoSettingsFactory;
     }
 
     @Bean
