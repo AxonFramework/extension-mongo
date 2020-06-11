@@ -49,9 +49,9 @@ public class MongoSettingsFactory {
     private List<ServerAddress> mongoAddresses = Collections.emptyList();
     private WriteConcern writeConcern;
     private int connectionsPerHost;
-    private int connectionTimeout;
+    private int socketConnectTimeout;
     private long maxWaitTime;
-    private int socketTimeOut;
+    private int socketReadTimeOut;
 
     /**
      * Default constructor for the factory that initializes the defaults.
@@ -66,19 +66,23 @@ public class MongoSettingsFactory {
      * @return MongoOptions instance based on the configured properties
      */
     public MongoClientSettings createMongoClientSettings() {
-        MongoClientSettings settings = MongoClientSettings.builder()
+         final MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder()
                 .applyToConnectionPoolSettings(builder -> builder.maxWaitTime(getMaxWaitTime(), TimeUnit.MILLISECONDS).maxSize(getConnectionsPerHost()))
-                .applyToClusterSettings(builder -> builder.hosts(mongoAddresses))
-                .applyToSocketSettings(builder -> builder.connectTimeout(getSocketTimeOut(), TimeUnit.MILLISECONDS))
-                .writeConcern(defaultWriteConcern())
-                .build();
+                .applyToSocketSettings(builder -> builder.connectTimeout(getSocketConnectTimeout(), TimeUnit.MILLISECONDS).readTimeout(getSocketReadTimeOut(), TimeUnit.MILLISECONDS))
+                .writeConcern(defaultWriteConcern());
+
+        if (this.mongoAddresses != null && this.mongoAddresses.size() > 0) {
+            mongoClientSettingsBuilder.applyToClusterSettings(builder -> builder.hosts(mongoAddresses));
+        }
+
+        MongoClientSettings settings = mongoClientSettingsBuilder.build();
 
         if (logger.isDebugEnabled()) {
             logger.debug("Mongo Options");
             logger.debug("Connections per host :{}", settings.getConnectionPoolSettings().getMaxSize());
             logger.debug("Connection timeout : {}", settings.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
             logger.debug("Max wait timeout : {}", settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
-            logger.debug("Socket timeout : {}", settings.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
+            logger.debug("Socket read timeout : {}", settings.getSocketSettings().getReadTimeout(TimeUnit.MILLISECONDS));
         }
 
         return settings;
@@ -103,21 +107,21 @@ public class MongoSettingsFactory {
     }
 
     /**
-     * Connection time out in milli seconds for doing something in mongo. Zero is indefinite
+     * Sets the connection timeout in milliseconds for doing something in mongo. Zero is indefinite
      *
      * @return number representing milli seconds of timeout
      */
-    public int getConnectionTimeout() {
-        return (connectionTimeout > 0) ? connectionTimeout : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
+    public int getSocketConnectTimeout() {
+        return (socketConnectTimeout > 0) ? socketConnectTimeout : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Setter for the connection time out.
+     * Setter for socket connection timeout.
      *
-     * @param connectionTimeout number representing the connection timeout in millis
+     * @param socketConnectTimeout number representing the connection timeout in millis
      */
-    public void setConnectionTimeout(int connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
+    public void setSocketConnectTimeout(int socketConnectTimeout) {
+        this.socketConnectTimeout = socketConnectTimeout;
     }
 
     /**
@@ -139,21 +143,21 @@ public class MongoSettingsFactory {
     }
 
     /**
-     * Getter for the socket timeout.
+     * Getter for the socket read timeout.
      *
      * @return Number representing the amount of milli seconds to wait for a socket connection
      */
-    public int getSocketTimeOut() {
-        return (socketTimeOut > 0) ? socketTimeOut : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
+    public int getSocketReadTimeOut() {
+        return (socketReadTimeOut > 0) ? socketReadTimeOut : defaults.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Setter for the socket time out.
+     * Setter for the socket read timeout.
      *
-     * @param socketTimeOut number representing the amount of milli seconds to wait for a socket connection
+     * @param socketReadTimeOut number representing the amount of milli seconds to wait for a socket connection
      */
-    public void setSocketTimeOut(int socketTimeOut) {
-        this.socketTimeOut = socketTimeOut;
+    public void setSocketReadTimeOut(int socketReadTimeOut) {
+        this.socketReadTimeOut = socketReadTimeOut;
     }
 
     /**

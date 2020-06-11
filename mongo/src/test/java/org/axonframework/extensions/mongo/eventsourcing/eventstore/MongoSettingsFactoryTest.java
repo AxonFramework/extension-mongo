@@ -49,13 +49,14 @@ class MongoSettingsFactoryTest {
     @Test
     void testCreateMongoClientSettings_customSet() {
         factory.setConnectionsPerHost(9);
-        factory.setConnectionTimeout(11);
+        factory.setSocketConnectTimeout(11);
         factory.setMaxWaitTime(3);
-        factory.setSocketTimeOut(23);
+        factory.setSocketReadTimeOut(23);
 
         MongoClientSettings options = factory.createMongoClientSettings();
         assertEquals(3, options.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
-        assertEquals(23, options.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
+        assertEquals(11, options.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS));
+        assertEquals(23, options.getSocketSettings().getReadTimeout(TimeUnit.MILLISECONDS));
         assertEquals(9, options.getConnectionPoolSettings().getMaxSize());
     }
 }
