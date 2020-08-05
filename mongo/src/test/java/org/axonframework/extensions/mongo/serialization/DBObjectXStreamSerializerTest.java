@@ -157,7 +157,9 @@ class DBObjectXStreamSerializerTest {
 
     private static class SecondTestEvent extends TestEvent {
 
-        private List<Object> objects;
+        private static final long serialVersionUID = -4918755275652698472L;
+
+        private final List<Object> objects;
 
         public SecondTestEvent(String name, List<Object> objects) {
             super(name);
@@ -174,12 +176,12 @@ class DBObjectXStreamSerializerTest {
     private static class TestEvent implements Serializable {
 
         private static final long serialVersionUID = 1L;
-        private String name;
+        private final String name;
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-        private List<String> someListOfString;
-        private LocalDate date;
-        private Instant dateTime;
-        private Period period;
+        private final List<String> someListOfString;
+        private final LocalDate date;
+        private final Instant dateTime;
+        private final Period period;
 
         public TestEvent(String name) {
             this.name = name;
@@ -198,7 +200,9 @@ class DBObjectXStreamSerializerTest {
 
     private static class TestEventWithEnumSet extends TestEvent {
 
-        private Set<SomeEnum> enumSet;
+        private static final long serialVersionUID = -9117549356246820817L;
+
+        private final Set<SomeEnum> enumSet;
 
         public TestEventWithEnumSet(String name) {
             super(name);
@@ -215,5 +219,6 @@ class DBObjectXStreamSerializerTest {
 
     private static class StubDomainEvent implements Serializable {
 
+        private static final long serialVersionUID = 3209191845532896831L;
     }
 }

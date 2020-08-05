@@ -46,21 +46,21 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.3.1</axon.version>
-        <spring.version>5.1.4.RELEASE</spring.version>
+        <axon.version>4.4.1</axon.version>
+        <mongo.driver.version>4.1.0</mongo.driver.version>
 
-        <slf4j.version>1.7.28</slf4j.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <log4j.version>2.13.3</log4j.version>
 
-        <junit.jupiter.version>5.5.2</junit.jupiter.version>
-        <mockito.version>3.0.0</mockito.version>
-        <jackson.version>2.9.8</jackson.version>
+        <junit.jupiter.version>5.6.2</junit.jupiter.version>
+        <mockito.version>3.4.6</mockito.version>
+        <jackson.version>2.11.2</jackson.version>
 
-        <commons-io.version>2.6</commons-io.version>
+        <spring.version>5.2.8.RELEASE</spring.version>
+        <commons-io.version>2.7</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
-        <javax.jaxb-api.version>2.3.0</javax.jaxb-api.version>
+        <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
 
-        <mongo.driver.version>4.0.3</mongo.driver.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
     </properties>
 

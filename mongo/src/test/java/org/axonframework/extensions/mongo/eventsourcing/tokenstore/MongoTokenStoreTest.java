@@ -75,8 +75,8 @@ class MongoTokenStoreTest {
     private MongoTemplate mongoTemplate;
     private MongoCollection<Document> trackingTokensCollection;
     private Serializer serializer;
-    private TemporalAmount claimTimeout = Duration.ofSeconds(5);
-    private Class<byte[]> contentType = byte[].class;
+    private final TemporalAmount claimTimeout = Duration.ofSeconds(5);
+    private final Class<byte[]> contentType = byte[].class;
 
     private final String testProcessorName = "testProcessorName";
     private final int testSegment = 9;
