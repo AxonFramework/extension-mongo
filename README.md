@@ -1,4 +1,7 @@
-# Axon Framework - Mongo Extension [![Build Status](https://travis-ci.org/AxonFramework/extension-mongo.svg?branch=master)](https://travis-ci.org/AxonFramework/extension-mongo)
+# Axon Framework - Mongo Extension 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.axonframework.extensions.mongo/axon-mongo/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.axonframework.extensions.mongo/axon-mongo/)
+![Build Status](https://github.com/AxonFramework/extension-mongo/workflows/Mongo%20Extension/badge.svg?branch=master)
+[![SonarCloud Status](https://sonarcloud.io/api/project_badges/measure?project=AxonFramework_extension-mongo&metric=alert_status)](https://sonarcloud.io/dashboard?id=AxonFramework_extension-mongo)
 
 Axon Framework is a framework for building evolutionary, event-driven microservice systems,
  based on the principles of Domain Driven Design, Command-Query Responsibility Segregation (CQRS) and Event Sourcing.
