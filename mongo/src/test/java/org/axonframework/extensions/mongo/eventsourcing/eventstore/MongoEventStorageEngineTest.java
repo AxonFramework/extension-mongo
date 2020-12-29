@@ -17,76 +17,56 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventsourcing.eventstore.AbstractEventStorageEngine;
 import org.axonframework.extensions.mongo.DefaultMongoTemplate;
-import org.axonframework.extensions.mongo.MongoTestContext;
-import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
 
 /**
  * Test class validating the {@link MongoEventStorageEngine}.
  *
  * @author Rene de Waele
  */
-@DirtiesContext
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = MongoTestContext.class)
+@Testcontainers
 class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
 
-    private static MongodExecutable mongoExe;
-    private static MongodProcess mongod;
+    @Container
+    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
 
-    @Autowired
-    private ApplicationContext context;
     private DefaultMongoTemplate mongoTemplate;
-
     private MongoEventStorageEngine testSubject;
-
-    @BeforeAll
-    static void start() throws IOException {
-        mongoExe = MongoLauncher.prepareExecutable();
-        mongod = mongoExe.start();
-    }
-
-    @AfterAll
-    static void shutdown() {
-        if (mongod != null) {
-            mongod.stop();
-        }
-        if (mongoExe != null) {
-            mongoExe.stop();
-        }
-    }
 
     @BeforeEach
     void setUp() {
-        MongoClient mongoClient = null;
-        try {
-            mongoClient = context.getBean(MongoClient.class);
-        } catch (Exception e) {
-            assumeTrue(true, "No Mongo instance found. Ignoring test.");
-        }
-        mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
-        testSubject = context.getBean(MongoEventStorageEngine.class);
+        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
+        ServerAddress containerAddress =
+                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
+        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
+        mongoSettingsFactory.setConnectionsPerHost(100);
+        MongoFactory mongoFactory = new MongoFactory();
+        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
+        MongoClient mongoClient = mongoFactory.createMongo();
+
+        mongoTemplate = DefaultMongoTemplate.builder()
+                                            .mongoDatabase(mongoClient)
+                                            .build();
+
+        testSubject = MongoEventStorageEngine.builder()
+                                             .mongoTemplate(mongoTemplate)
+                                             .build();
         setTestSubject(testSubject);
     }
 

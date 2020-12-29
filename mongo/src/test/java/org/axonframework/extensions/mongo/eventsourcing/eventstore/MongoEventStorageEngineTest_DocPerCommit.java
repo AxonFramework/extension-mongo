@@ -17,9 +17,8 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
@@ -28,29 +27,19 @@ import org.axonframework.eventhandling.TrackedEventData;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventsourcing.eventstore.EventStoreException;
 import org.axonframework.extensions.mongo.DefaultMongoTemplate;
-import org.axonframework.extensions.mongo.MongoTemplate;
-import org.axonframework.extensions.mongo.eventhandling.saga.repository.MongoSagaStore;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
 import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
-import org.axonframework.extensions.mongo.utils.MongoLauncher;
 import org.axonframework.modelling.command.AggregateStreamCreationException;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
-import org.axonframework.spring.saga.SpringResourceInjector;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,58 +47,47 @@ import static java.util.stream.Collectors.toList;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Test class validating the {@link MongoEventStorageEngine} using the document-per-commit strategy.
  *
  * @author Rene de Waele
  */
-@DirtiesContext
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = MongoEventStorageEngineTest_DocPerCommit.TestContext.class)
+@Testcontainers
 class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorageEngineTest {
 
-    private static MongodExecutable mongoExe;
-    private static MongodProcess mongod;
+    @Container
+    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
+    private static final Serializer DB_OBJECT_XSTREAM_SERIALIZER = DBObjectXStreamSerializer.builder().build();
 
-    @Autowired
-    private ApplicationContext context;
     private DefaultMongoTemplate mongoTemplate;
-
     private MongoEventStorageEngine testSubject;
-
-    @BeforeAll
-    static void start() throws IOException {
-        mongoExe = MongoLauncher.prepareExecutable();
-        mongod = mongoExe.start();
-    }
-
-    @AfterAll
-    static void shutdown() {
-        if (mongod != null) {
-            mongod.stop();
-        }
-        if (mongoExe != null) {
-            mongoExe.stop();
-        }
-    }
 
     @BeforeEach
     void setUp() {
-        MongoClient mongoClient = null;
-        try {
-            mongoClient = context.getBean(MongoClient.class);
-        } catch (Exception e) {
-            assumeTrue(true, "No Mongo instance found. Ignoring test.");
-        }
-        mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
+        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
+        ServerAddress containerAddress =
+                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
+        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
+        mongoSettingsFactory.setConnectionsPerHost(100);
+        MongoFactory mongoFactory = new MongoFactory();
+        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
+        MongoClient mongoClient = mongoFactory.createMongo();
+
+        mongoTemplate = DefaultMongoTemplate.builder()
+                                            .mongoDatabase(mongoClient)
+                                            .build();
         mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
         mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
         mongoTemplate.eventCollection().dropIndexes();
         mongoTemplate.snapshotCollection().dropIndexes();
-        testSubject = context.getBean(MongoEventStorageEngine.class);
+
+        testSubject = MongoEventStorageEngine.builder()
+                                             .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                             .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                             .mongoTemplate(mongoTemplate)
+                                             .storageStrategy(new DocumentPerCommitStorageStrategy())
+                                             .build();
         setTestSubject(testSubject);
     }
 
@@ -185,7 +163,6 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @Test
     @Override
-    @DirtiesContext
     public void testStoreDuplicateEventWithExceptionTranslator() {
         assertThrows(AggregateStreamCreationException.class, () -> {
             testSubject.appendEvents(createEvent(0));
@@ -193,24 +170,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
         });
     }
 
-    @Override
-    protected MongoEventStorageEngine createEngine(EventUpcaster upcasterChain) {
-        return MongoEventStorageEngine.builder()
-                                      .upcasterChain(upcasterChain)
-                                      .mongoTemplate(mongoTemplate)
-                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                      .build();
-    }
-
-    @Override
-    protected MongoEventStorageEngine createEngine(PersistenceExceptionResolver persistenceExceptionResolver) {
-        return MongoEventStorageEngine.builder()
-                                      .persistenceExceptionResolver(persistenceExceptionResolver)
-                                      .mongoTemplate(mongoTemplate)
-                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                      .build();
-    }
-
+    @SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
     @Override
     public void testCreateTokenAtExactTime() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
@@ -227,6 +187,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
         assertEventStreamsById(Arrays.asList(event1, event2, event3), readEvents);
     }
 
+    @SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
     @Override
     public void testCreateTokenWithUnorderedEvents() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:46.00Z"));
@@ -245,68 +206,21 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
         assertEventStreamsById(Arrays.asList(event1, event2, event3, event4, event5), readEvents);
     }
 
-    @Configuration
-    public static class TestContext {
+    @Override
+    protected MongoEventStorageEngine createEngine(EventUpcaster upcasterChain) {
+        return MongoEventStorageEngine.builder()
+                                      .upcasterChain(upcasterChain)
+                                      .mongoTemplate(mongoTemplate)
+                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
+                                      .build();
+    }
 
-        @Bean
-        public MongoEventStorageEngine mongoEventStorageEngine(Serializer serializer, MongoTemplate mongoTemplate) {
-            return MongoEventStorageEngine.builder()
-                                          .snapshotSerializer(serializer)
-                                          .eventSerializer(serializer)
-                                          .mongoTemplate(mongoTemplate)
-                                          .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                          .build();
-        }
-
-        @Bean
-        public Serializer serializer() {
-            return DBObjectXStreamSerializer.builder().build();
-        }
-
-        @Bean
-        public MongoTemplate mongoTemplate(MongoClient mongoClient) {
-            return DefaultMongoTemplate.builder()
-                                       .mongoDatabase(mongoClient)
-                                       .build();
-        }
-
-        @Bean
-        public MongoClient mongoClient(MongoFactory mongoFactory) {
-            return mongoFactory.createMongo();
-        }
-
-        @Bean
-        public MongoFactory mongoFactoryBean(MongoSettingsFactory mongoSettingsFactory) {
-            MongoFactory mongoFactory = new MongoFactory();
-            mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
-            return mongoFactory;
-        }
-
-        @Bean
-        public MongoSettingsFactory mongoSettingsFactory() {
-            MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
-            mongoSettingsFactory.setConnectionsPerHost(100);
-            return mongoSettingsFactory;
-        }
-
-        @Bean
-        public SpringResourceInjector springResourceInjector() {
-            return new SpringResourceInjector();
-        }
-
-        @Bean
-        public MongoSagaStore mongoSagaStore(MongoTemplate sagaMongoTemplate) {
-            return MongoSagaStore.builder().mongoTemplate(sagaMongoTemplate).build();
-        }
-
-        @Bean
-        public MongoTemplate sagaMongoTemplate(MongoClient mongoClient) {
-            return DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
-        }
-
-        @Bean
-        public PlatformTransactionManager transactionManager() {
-            return mock(PlatformTransactionManager.class);
-        }
+    @Override
+    protected MongoEventStorageEngine createEngine(PersistenceExceptionResolver persistenceExceptionResolver) {
+        return MongoEventStorageEngine.builder()
+                                      .persistenceExceptionResolver(persistenceExceptionResolver)
+                                      .mongoTemplate(mongoTemplate)
+                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
+                                      .build();
     }
 }
