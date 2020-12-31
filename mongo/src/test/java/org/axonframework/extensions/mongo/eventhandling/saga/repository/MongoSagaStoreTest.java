@@ -16,13 +16,9 @@
 
 package org.axonframework.extensions.mongo.eventhandling.saga.repository;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
 import org.axonframework.extensions.mongo.MongoTemplate;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoFactory;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoSettingsFactory;
+import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.modelling.saga.AssociationValue;
 import org.axonframework.modelling.saga.AssociationValues;
 import org.axonframework.modelling.saga.AssociationValuesImpl;
@@ -36,7 +32,6 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
@@ -54,26 +49,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoSagaStoreTest {
 
     @Container
-    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
 
     private MongoTemplate mongoTemplate;
     private MongoSagaStore testSubject;
 
     @BeforeEach
     void setUp() {
-        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
-        ServerAddress containerAddress =
-                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
-        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
-        mongoSettingsFactory.setConnectionsPerHost(100);
-        MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
-        MongoClient mongoClient = mongoFactory.createMongo();
-        mongoTemplate = DefaultMongoTemplate.builder()
-                                            .mongoDatabase(mongoClient)
-                                            .build();
+        mongoTemplate = MongoTemplateFactory.build(
+                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+        );
         mongoTemplate.sagaCollection().drop();
-
         testSubject = MongoSagaStore.builder()
                                     .mongoTemplate(mongoTemplate)
                                     .build();

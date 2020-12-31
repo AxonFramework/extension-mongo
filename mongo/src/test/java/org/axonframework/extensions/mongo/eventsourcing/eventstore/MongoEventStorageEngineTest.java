@@ -17,18 +17,16 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoClient;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventsourcing.eventstore.AbstractEventStorageEngine;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
+import org.axonframework.extensions.mongo.MongoTemplate;
+import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
@@ -44,26 +42,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
 
     @Container
-    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
 
-    private DefaultMongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
     private MongoEventStorageEngine testSubject;
 
     @BeforeEach
     void setUp() {
-        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
-        ServerAddress containerAddress =
-                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
-        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
-        mongoSettingsFactory.setConnectionsPerHost(100);
-        MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
-        MongoClient mongoClient = mongoFactory.createMongo();
-
-        mongoTemplate = DefaultMongoTemplate.builder()
-                                            .mongoDatabase(mongoClient)
-                                            .build();
-
+        mongoTemplate = MongoTemplateFactory.build(
+                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+        );
         testSubject = MongoEventStorageEngine.builder()
                                              .mongoTemplate(mongoTemplate)
                                              .build();

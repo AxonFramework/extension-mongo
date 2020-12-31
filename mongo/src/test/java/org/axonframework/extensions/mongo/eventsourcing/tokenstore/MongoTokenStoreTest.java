@@ -16,8 +16,6 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
@@ -25,10 +23,8 @@ import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
 import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
 import org.axonframework.extensions.mongo.MongoTemplate;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoFactory;
-import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoSettingsFactory;
+import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
@@ -42,7 +38,6 @@ import java.time.Duration;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -64,7 +59,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoTokenStoreTest {
 
     @Container
-    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
 
     private MongoTokenStore tokenStore;
     private MongoTokenStore tokenStoreDifferentOwner;
@@ -82,22 +77,13 @@ class MongoTokenStoreTest {
 
     @BeforeEach
     void setUp() {
-        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
-        ServerAddress containerAddress =
-                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
-        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
-        mongoSettingsFactory.setConnectionsPerHost(100);
-        MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
-        MongoClient mongoClient = mongoFactory.createMongo();
-        serializer = XStreamSerializer.defaultSerializer();
-
-        mongoTemplate = DefaultMongoTemplate.builder()
-                                            .mongoDatabase(mongoClient)
-                                            .build();
+        mongoTemplate = MongoTemplateFactory.build(
+                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+        );
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
 
+        serializer = XStreamSerializer.defaultSerializer();
         MongoTokenStore.Builder tokenStoreBuilder = MongoTokenStore.builder()
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)

@@ -17,8 +17,6 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoClient;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
@@ -26,9 +24,10 @@ import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.TrackedEventData;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventsourcing.eventstore.EventStoreException;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
+import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
 import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
+import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.modelling.command.AggregateStreamCreationException;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.upcasting.event.EventUpcaster;
@@ -39,7 +38,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,26 +55,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorageEngineTest {
 
     @Container
-    private static final MongoDBContainer MONGO_DB_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
     private static final Serializer DB_OBJECT_XSTREAM_SERIALIZER = DBObjectXStreamSerializer.builder().build();
 
-    private DefaultMongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
     private MongoEventStorageEngine testSubject;
 
     @BeforeEach
     void setUp() {
-        MongoSettingsFactory mongoSettingsFactory = new MongoSettingsFactory();
-        ServerAddress containerAddress =
-                new ServerAddress(MONGO_DB_CONTAINER.getHost(), MONGO_DB_CONTAINER.getFirstMappedPort());
-        mongoSettingsFactory.setMongoAddresses(Collections.singletonList(containerAddress));
-        mongoSettingsFactory.setConnectionsPerHost(100);
-        MongoFactory mongoFactory = new MongoFactory();
-        mongoFactory.setMongoClientSettings(mongoSettingsFactory.createMongoClientSettings());
-        MongoClient mongoClient = mongoFactory.createMongo();
-
-        mongoTemplate = DefaultMongoTemplate.builder()
-                                            .mongoDatabase(mongoClient)
-                                            .build();
+        mongoTemplate = MongoTemplateFactory.build(
+                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+        );
         mongoTemplate.eventCollection().deleteMany(new BasicDBObject());
         mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
         mongoTemplate.eventCollection().dropIndexes();
