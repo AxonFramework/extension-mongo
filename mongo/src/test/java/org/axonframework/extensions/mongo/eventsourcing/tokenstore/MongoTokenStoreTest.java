@@ -16,30 +16,23 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
 import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
-import org.axonframework.extensions.mongo.DefaultMongoTemplate;
 import org.axonframework.extensions.mongo.MongoTemplate;
-import org.axonframework.extensions.mongo.MongoTestContext;
-import org.axonframework.extensions.mongo.utils.MongoLauncher;
+import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.temporal.TemporalAmount;
@@ -62,15 +55,14 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Joris van der Kallen
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = MongoTestContext.class)
+@Testcontainers
 class MongoTokenStoreTest {
+
+    @Container
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
 
     private MongoTokenStore tokenStore;
     private MongoTokenStore tokenStoreDifferentOwner;
-
-    private static MongodExecutable mongoExe;
-    private static MongodProcess mongod;
 
     private MongoTemplate mongoTemplate;
     private MongoCollection<Document> trackingTokensCollection;
@@ -83,34 +75,15 @@ class MongoTokenStoreTest {
     private final int testSegmentCount = 10;
     private final String testOwner = "testOwner";
 
-    @Autowired
-    private ApplicationContext context;
-
-    @BeforeAll
-    static void startMongoDB() throws Exception {
-        mongoExe = MongoLauncher.prepareExecutable();
-        mongod = mongoExe.start();
-    }
-
-    @AfterAll
-    static void stopMongoDB() {
-        if (mongod != null) {
-            mongod.stop();
-        }
-        if (mongoExe != null) {
-            mongoExe.stop();
-        }
-    }
-
     @BeforeEach
     void setUp() {
-        MongoClient mongoClient = context.getBean(MongoClient.class);
-        serializer = XStreamSerializer.builder().build();
-
-        mongoTemplate = DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build();
+        mongoTemplate = MongoTemplateFactory.build(
+                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+        );
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
 
+        serializer = XStreamSerializer.defaultSerializer();
         MongoTokenStore.Builder tokenStoreBuilder = MongoTokenStore.builder()
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)
