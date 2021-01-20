@@ -36,8 +36,8 @@ public abstract class AbstractMongoTemplate {
     /**
      * Instantiate a {@link AbstractMongoTemplate} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an
-     * {@link AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an {@link
+     * AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link AbstractMongoTemplate} instance
      */
@@ -49,9 +49,9 @@ public abstract class AbstractMongoTemplate {
     /**
      * Returns a reference to the Database with the configured database name. If a username and/or password have been
      * provided, these are used to authenticate against the database.
-     * <p/>
-     * Note that the configured {@code userName} and {@code password} are ignored if the database is already
-     * in an authenticated state.
+     * <p>
+     * Note that the configured {@code userName} and {@code password} are ignored if the database is already in an
+     * authenticated state.
      *
      * @return a DB instance, referring to the database with configured name.
      */
@@ -74,9 +74,9 @@ public abstract class AbstractMongoTemplate {
         private MongoDatabase database;
 
         /**
-         * Sets the {@link MongoDatabase} by means of providing a {@link MongoClient}. The
-         * {@link MongoClient#getDatabase(String)} function is in turn used to retrieve the MongoDatabase, using
-         * {@link AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE} as the database name.
+         * Sets the {@link MongoDatabase} by means of providing a {@link MongoClient}. The {@link
+         * MongoClient#getDatabase(String)} function is in turn used to retrieve the MongoDatabase, using {@link
+         * AbstractMongoTemplate.Builder#DEFAULT_AXONFRAMEWORK_DATABASE} as the database name.
          *
          * @param mongoClient the {@link MongoClient} used to retrieve a {@link MongoDatabase} from
          * @return the current Builder instance, for fluent interfacing
@@ -86,9 +86,9 @@ public abstract class AbstractMongoTemplate {
         }
 
         /**
-         * Sets the {@link MongoDatabase} by means of providing a {@link MongoClient}. The
-         * {@link MongoClient#getDatabase(String)} function is in turn used to retrieve the MongoDatabase using
-         * {@code databaseName} as the database name.
+         * Sets the {@link MongoDatabase} by means of providing a {@link MongoClient}. The {@link
+         * MongoClient#getDatabase(String)} function is in turn used to retrieve the MongoDatabase using {@code
+         * databaseName} as the database name.
          *
          * @param mongoClient  the {@link MongoClient} used to retrieve a {@link MongoDatabase} from
          * @param databaseName a {@link String} denoting the name of the {@link MongoDatabase}

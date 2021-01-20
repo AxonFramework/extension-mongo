@@ -38,7 +38,7 @@ public class DBObjectHierarchicalStreamWriter implements ExtendedHierarchicalStr
 
     /**
      * Initialize the writer to write the object structure to the given {@code root} DBObject.
-     * <p/>
+     * <p>
      * Note that the given {@code root} DBObject must not contain any data yet.
      *
      * @param root The root DBObject to which the serialized structure will be added. Must not contain any data.

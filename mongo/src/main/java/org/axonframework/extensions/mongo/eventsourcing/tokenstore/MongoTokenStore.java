@@ -81,8 +81,8 @@ public class MongoTokenStore implements TokenStore {
     /**
      * Instantiate a {@link MongoTokenStore} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoTemplate} and {@link Serializer} are not {@code null}, and will throw an
-     * {@link AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link MongoTemplate} and {@link Serializer} are not {@code null}, and will throw an {@link
+     * AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link MongoTokenStore} instance
      */
@@ -99,9 +99,9 @@ public class MongoTokenStore implements TokenStore {
     /**
      * Instantiate a Builder to be able to create a {@link MongoTokenStore}.
      * <p>
-     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)},
-     * {@code nodeId} is defaulted to the {@link ManagementFactory#getRuntimeMXBean#getName} output and the
-     * {@code contentType} to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
+     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
+     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output and the {@code contentType}
+     * to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
      * <b>hard requirements</b> and as such should be provided.
      *
      * @return a Builder to be able to create a {@link MongoTokenStore}
@@ -348,9 +348,9 @@ public class MongoTokenStore implements TokenStore {
     /**
      * Builder class to instantiate a {@link MongoTokenStore}.
      * <p>
-     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)},
-     * {@code nodeId} is defaulted to the {@link ManagementFactory#getRuntimeMXBean#getName} output and the
-     * {@code contentType} to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
+     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
+     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output and the {@code contentType}
+     * to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
      * <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
@@ -364,8 +364,8 @@ public class MongoTokenStore implements TokenStore {
         /**
          * Sets the {@link MongoTemplate} providing access to the collection which stores the {@link TrackingToken}s.
          *
-         * @param mongoTemplate the {@link MongoTemplate} providing access to the collection which stores the
-         *                      {@link TrackingToken}s
+         * @param mongoTemplate the {@link MongoTemplate} providing access to the collection which stores the {@link
+         *                      TrackingToken}s
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder mongoTemplate(MongoTemplate mongoTemplate) {
@@ -388,8 +388,8 @@ public class MongoTokenStore implements TokenStore {
 
         /**
          * Sets the {@code claimTimeout} specifying the amount of time this process will wait after which this process
-         * will force a claim of a {@link TrackingToken}. Thus if a claim has not been updated for the given
-         * {@code claimTimeout}, this process will 'steal' the claim. Defaults to a duration of 10 seconds.
+         * will force a claim of a {@link TrackingToken}. Thus if a claim has not been updated for the given {@code
+         * claimTimeout}, this process will 'steal' the claim. Defaults to a duration of 10 seconds.
          *
          * @param claimTimeout a timeout specifying the time after which this process will force a claim
          * @return the current Builder instance, for fluent interfacing
@@ -401,8 +401,8 @@ public class MongoTokenStore implements TokenStore {
         }
 
         /**
-         * Sets the {@code nodeId} to identify ownership of the tokens. Defaults to
-         * {@link ManagementFactory#getRuntimeMXBean#getName} output as the node id.
+         * Sets the {@code nodeId} to identify ownership of the tokens. Defaults to {@code
+         * ManagementFactory#getRuntimeMXBean#getName} output as the node id.
          *
          * @param nodeId the id as a {@link String} to identify ownership of the tokens
          * @return the current Builder instance, for fluent interfacing
@@ -414,8 +414,8 @@ public class MongoTokenStore implements TokenStore {
         }
 
         /**
-         * Sets the {@code contentType} to which a {@link TrackingToken} should be serialized. Defaults to a
-         * {@code byte[]} {@link Class} type.
+         * Sets the {@code contentType} to which a {@link TrackingToken} should be serialized. Defaults to a {@code
+         * byte[]} {@link Class} type.
          *
          * @param contentType the content type as a {@link Class} to which a {@link TrackingToken} should be serialized
          * @return the current Builder instance, for fluent interfacing

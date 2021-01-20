@@ -67,7 +67,8 @@ public interface StorageStrategy {
      *
      * @param snapshotCollection  the document collection that contains aggregate snapshot entries
      * @param aggregateIdentifier the identifier of the aggregate for which to delete all snapshots
-     * @param sequenceNumber      The sequenceNumber representing the upper bound (exclusive) of the snapshots to delete
+     * @param sequenceNumber      The sequenceNumber representing the upper bound (exclusive) of the snapshots to
+     *                            delete
      */
     void deleteSnapshots(MongoCollection<Document> snapshotCollection, String aggregateIdentifier, long sequenceNumber);
 
@@ -96,7 +97,8 @@ public interface StorageStrategy {
      * size of the returned list should not exceed the given {@code batchSize}.
      *
      * @param eventCollection The collection in which to find the events
-     * @param lastToken       the token of the last event in the previous batch or {@code null} to load the oldest batch
+     * @param lastToken       the token of the last event in the previous batch or {@code null} to load the oldest
+     *                        batch
      * @param batchSize       The maximum number of event entries to fetch
      * @return a list of matching tracked event entries
      */
@@ -136,6 +138,8 @@ public interface StorageStrategy {
     /**
      * Creates a token that is at the tail of an event stream - that tracks events from the beginning of time.
      *
+     * @param eventsCollection {@link MongoCollection} of {@link Document} instances used to base the {@link
+     *                         TrackingToken} on
      * @return a tracking token at the tail of an event stream, if event stream is empty {@code null} is returned
      */
     TrackingToken createTailToken(MongoCollection<Document> eventsCollection);

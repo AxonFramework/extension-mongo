@@ -43,9 +43,9 @@ public class BSONNode {
     /**
      * Creates a node with given "code" name. Generally, this constructor is used for the root node. For child nodes,
      * see the convenience method {@link #addChildNode(String)}.
-     * <p/>
-     * Note that the given {@code name} is encoded in a BSON compatible way. That means that periods (".") are
-     * replaced by forward slashes "/", and any slashes are prefixes with additional slash. For example, the String
+     * <p>
+     * Note that the given {@code name} is encoded in a BSON compatible way. That means that periods (".") are replaced
+     * by forward slashes "/", and any slashes are prefixes with additional slash. For example, the String
      * "some.period/slash" would become "some/period//slash". This is only imporant when querying BSON structures
      * directly.
      *
@@ -127,8 +127,8 @@ public class BSONNode {
     }
 
     /**
-     * Sets an attribute to this node. Since JSON (and BSON) do not have the notion of attributes, these are modelled
-     * as child nodes with their name prefixed with "attr_". Attributes are represented as nodes that <em>always</em>
+     * Sets an attribute to this node. Since JSON (and BSON) do not have the notion of attributes, these are modelled as
+     * child nodes with their name prefixed with "attr_". Attributes are represented as nodes that <em>always</em>
      * exclusively contain a value.
      *
      * @param attributeName  The name of the attribute to add
@@ -139,8 +139,8 @@ public class BSONNode {
     }
 
     /**
-     * Adds a child node to the current node. Note that the name of a child node must not be {@code null} and may
-     * not start with "attr_", in order to differentiate between child nodes and attributes.
+     * Adds a child node to the current node. Note that the name of a child node must not be {@code null} and may not
+     * start with "attr_", in order to differentiate between child nodes and attributes.
      *
      * @param name The name of the child node
      * @return A BSONNode representing the newly created child node.
@@ -174,8 +174,8 @@ public class BSONNode {
     }
 
     /**
-     * Returns a map containing the attributes of the current node. Changes to the node's attributes made
-     * after this iterator is returned may not be reflected in that iterator.
+     * Returns a map containing the attributes of the current node. Changes to the node's attributes made after this
+     * iterator is returned may not be reflected in that iterator.
      *
      * @return a Map containing the attributes of the current node
      */

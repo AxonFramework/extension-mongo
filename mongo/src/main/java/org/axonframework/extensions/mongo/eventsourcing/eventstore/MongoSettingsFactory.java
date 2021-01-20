@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
- * Factory class used to create a {@code MongoClientSettings} instance. The instance makes use of the defaults as provided
- * by the MongoOptions class. The moment you set a valid value, that value is used to create the options object.
+ * Factory class used to create a {@code MongoClientSettings} instance. The instance makes use of the defaults as
+ * provided by the MongoOptions class. The moment you set a valid value, that value is used to create the options
+ * object.
  * </p>
- *
- * Note: WriteConcern enums were changed in MongoDb driver 4.x.
- * Depending on the number of addresses provided, the factory defaults to either {@link WriteConcern#W2} when
- * more than one address is provided, or {@link WriteConcern#JOURNALED} when only one server is available. The idea of
- * these defaults is that data must be able to survive a (not too heavy) crash without loss of data. We wouldn't want to
- * publish untraceable events, would we...
+ * <p>
+ * Note: WriteConcern enums were changed in MongoDb driver 4.x. Depending on the number of addresses provided, the
+ * factory defaults to either {@link WriteConcern#W2} when more than one address is provided, or {@link
+ * WriteConcern#JOURNALED} when only one server is available. The idea of these defaults is that data must be able to
+ * survive a (not too heavy) crash without loss of data. We wouldn't want to publish untraceable events, would we...
  *
  * @author Jettro Coenradie
  * @since 2.0 (in incubator since 0.7)
@@ -161,12 +161,13 @@ public class MongoSettingsFactory {
     }
 
     /**
-     * Provide a list of ServerAddress objects to use for locating the Mongo replica set. An empty list will result in
-     * a single Mongo instance being used on the default host ({@code 127.0.0.1}) and port
-     * (<code>{@code com.mongodb.ServerAddress#defaultPort}</code>)
-     * <p/>
-     * Defaults to an empty list, which locates a single Mongo instance on the default host ({@code 127.0.0.1})
-     * and port <code>({@code com.mongodb.ServerAddress#defaultPort})</code>
+     * Provide a list of ServerAddress objects to use for locating the Mongo replica set. An empty list will result in a
+     * single Mongo instance being used on the default host ({@code 127.0.0.1}) and port ({@code
+     * com.mongodb.ServerAddress#defaultPort})
+     * <p>
+     * Defaults to an empty list, which locates a single Mongo instance on the default host ({@code 127.0.0.1}) and
+     * port
+     * <code>({@code com.mongodb.ServerAddress#defaultPort})</code>
      *
      * @param mongoAddresses List of ServerAddress instances
      */
@@ -176,16 +177,15 @@ public class MongoSettingsFactory {
 
     /**
      * Provided a write concern to be used by the mongo instance. The provided concern should be compatible with the
-     * number of addresses provided with {@link #setMongoAddresses(java.util.List)}. For example, providing
-     * {@link WriteConcern#W2} in combination with a single address will cause each write operation to hang.
-     * <p/>
-     * While safe (e.g. {@link WriteConcern#W2}) WriteConcerns allow you to detect concurrency issues
-     * immediately, you might want to use a more relaxed write concern if you have other mechanisms in place to ensure
-     * consistency.
-     * <p/>
-     * Defaults to {@link WriteConcern#W2} if you provided more than one address with
-     * {@link #setMongoAddresses(java.util.List)}, or {@link WriteConcern#JOURNALED} if there is only one address (or
-     * none at all).
+     * number of addresses provided with {@link #setMongoAddresses(java.util.List)}. For example, providing {@link
+     * WriteConcern#W2} in combination with a single address will cause each write operation to hang.
+     * <p>
+     * While safe (e.g. {@link WriteConcern#W2}) WriteConcerns allow you to detect concurrency issues immediately, you
+     * might want to use a more relaxed write concern if you have other mechanisms in place to ensure consistency.
+     * <p>
+     * Defaults to {@link WriteConcern#W2} if you provided more than one address with {@link
+     * #setMongoAddresses(java.util.List)}, or {@link WriteConcern#JOURNALED} if there is only one address (or none at
+     * all).
      *
      * @param writeConcern WriteConcern to use for the connections
      */
@@ -202,5 +202,4 @@ public class MongoSettingsFactory {
             return WriteConcern.JOURNALED;
         }
     }
-
 }

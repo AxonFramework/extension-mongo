@@ -16,19 +16,19 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
-import com.mongodb.client.MongoClient;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
 /**
  * Convenience class for creating Mongo instances. It helps configuring a Mongo instance with a WriteConcern safe to use
  * in combination with the given server addresses.
- * <p/>
- *
- * Upgrade note: Upon upgrading the MongoDb driver version from  3.x to 4.x, write concerns were moved to MongoOptionsFactory.
- * @see MongoSettingsFactory
+ * <p>
+ * Upgrade note: Upon upgrading the MongoDb driver version from  3.x to 4.x, write concerns were moved to
+ * MongoOptionsFactory.
  *
  * @author Jettro Coenradie
+ * @see MongoSettingsFactory
  * @since 2.0 (in incubator since 0.7)
  */
 public class MongoFactory {
@@ -46,13 +46,12 @@ public class MongoFactory {
     }
 
     /**
-     * Provide an instance of MongoClientSettings to be used for the connections. Defaults to a MongoClientSettings with all its
-     * default settings.
+     * Provide an instance of MongoClientSettings to be used for the connections. Defaults to a MongoClientSettings with
+     * all its default settings.
      *
      * @param mongoClientSettings MongoClientSettings to overrule the default
      */
     public void setMongoClientSettings(MongoClientSettings mongoClientSettings) {
         this.mongoClientSettings = mongoClientSettings;
     }
-
 }
