@@ -93,7 +93,9 @@ public class MongoTokenStore implements TokenStore {
         this.claimTimeout = builder.claimTimeout;
         this.nodeId = builder.nodeId;
         this.contentType = builder.contentType;
-        ensureIndexes();
+        if(builder.ensureIndexes){
+            ensureIndexes();
+        }
     }
 
     /**
@@ -349,9 +351,9 @@ public class MongoTokenStore implements TokenStore {
      * Builder class to instantiate a {@link MongoTokenStore}.
      * <p>
      * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
-     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output and the {@code contentType}
-     * to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
-     * <b>hard requirements</b> and as such should be provided.
+     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output, the {@code contentType}
+     * to a {@code byte[]} {@link Class}, and the {@code ensureIndexes} to {@code true}. The {@link MongoTemplate} and
+     * {@link Serializer} are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
 
@@ -360,6 +362,7 @@ public class MongoTokenStore implements TokenStore {
         private TemporalAmount claimTimeout = Duration.ofSeconds(10);
         private String nodeId = ManagementFactory.getRuntimeMXBean().getName();
         private Class<?> contentType = byte[].class;
+        private boolean ensureIndexes = true;
 
         /**
          * Sets the {@link MongoTemplate} providing access to the collection which stores the {@link TrackingToken}s.
@@ -423,6 +426,19 @@ public class MongoTokenStore implements TokenStore {
         public Builder contentType(Class<?> contentType) {
             assertNonNull(contentType, "The content type may not be null");
             this.contentType = contentType;
+            return this;
+        }
+
+        /**
+         * Sets the {@code ensureIndexes} to tell the builder whether to create or not the indexes required to work with
+         * the TokenStore. Defaults to {@code true}. If set to {@code false}, the developer is responsible for the
+         * creation of the indexes defined in the {@link MongoTokenStore#ensureIndexes()} method beforehand.
+         *
+         * @param ensureIndexes the boolean to indicate if the indexes should be created.
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder ensureIndexes(boolean ensureIndexes) {
+            this.ensureIndexes = ensureIndexes;
             return this;
         }
 
