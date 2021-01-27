@@ -16,6 +16,7 @@
 
 package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 
+import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
@@ -39,6 +40,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,6 +71,7 @@ class MongoTokenStoreTest {
     private Serializer serializer;
     private final TemporalAmount claimTimeout = Duration.ofSeconds(5);
     private final Class<byte[]> contentType = byte[].class;
+    private final boolean ensureIndexes = true;
 
     private final String testProcessorName = "testProcessorName";
     private final int testSegment = 9;
@@ -88,7 +91,8 @@ class MongoTokenStoreTest {
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)
                                                                    .claimTimeout(claimTimeout)
-                                                                   .contentType(contentType);
+                                                                   .contentType(contentType)
+                                                                   .ensureIndexes(ensureIndexes);
         tokenStore = tokenStoreBuilder.nodeId(testOwner).build();
         tokenStoreDifferentOwner = tokenStoreBuilder.nodeId("anotherOwner").build();
     }
@@ -228,6 +232,7 @@ class MongoTokenStoreTest {
                                                            .claimTimeout(claimTimeout)
                                                            .nodeId(owner)
                                                            .contentType(contentType)
+                                                           .ensureIndexes(ensureIndexes)
                                                            .build();
                     GlobalSequenceTrackingToken token = new GlobalSequenceTrackingToken(iteration);
                     tokenStore.initializeSegment(token, testProcessorName, testSegment);
@@ -261,6 +266,7 @@ class MongoTokenStoreTest {
                                                .claimTimeout(claimTimeout)
                                                .nodeId(String.valueOf(iterationOfSuccessfulAttempt))
                                                .contentType(contentType)
+                                               .ensureIndexes(ensureIndexes)
                                                .build();
 
         assertEquals(new GlobalSequenceTrackingToken(iterationOfSuccessfulAttempt),
@@ -275,6 +281,7 @@ class MongoTokenStoreTest {
                                                .claimTimeout(claimTimeout)
                                                .contentType(contentType)
                                                .nodeId(testOwner)
+                                               .ensureIndexes(ensureIndexes)
                                                .build();
         GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
         String testProcessorName = "processorName";
@@ -295,6 +302,7 @@ class MongoTokenStoreTest {
                                                .claimTimeout(claimTimeout)
                                                .contentType(contentType)
                                                .nodeId(testOwner)
+                                               .ensureIndexes(ensureIndexes)
                                                .build();
         GlobalSequenceTrackingToken testToken = new GlobalSequenceTrackingToken(100);
         String testProcessorName = "processorName";
@@ -377,5 +385,19 @@ class MongoTokenStoreTest {
                 UnableToClaimTokenException.class,
                 () -> tokenStore.deleteToken(testProcessorName, testSegment)
         );
+    }
+
+    @Test
+    void testEnsureIndexCreation() {
+        ListIndexesIterable<Document> listIndexes = trackingTokensCollection.listIndexes();
+        boolean indexFound = false;
+        for (Document index : listIndexes) {
+            if (Objects.equals("processorName_1_segment_1", index.getString("name"))) {
+                // The index with this name exists, meaning it was created on MongoTokenStore build() method.
+                indexFound = true;
+                break;
+            }
+        }
+        assertTrue(indexFound);
     }
 }
