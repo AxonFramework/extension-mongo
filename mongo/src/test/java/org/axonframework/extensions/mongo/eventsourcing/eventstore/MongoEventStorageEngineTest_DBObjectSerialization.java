@@ -18,17 +18,25 @@ package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
-import org.axonframework.common.jdbc.PersistenceExceptionResolver;
-import org.axonframework.eventsourcing.eventstore.AbstractEventStorageEngine;
+import org.axonframework.eventhandling.DomainEventMessage;
+import org.axonframework.eventhandling.EventMessage;
+import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.UnaryOperator;
+
+import static java.util.stream.Collectors.toList;
+import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
 
 /**
  * Test class validating the {@link MongoEventStorageEngine} with the {@link DBObjectXStreamSerializer}.
@@ -57,12 +65,7 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
         mongoTemplate.eventCollection().dropIndexes();
         mongoTemplate.snapshotCollection().dropIndexes();
 
-        testSubject = MongoEventStorageEngine.builder()
-                                             .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                             .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                             .mongoTemplate(mongoTemplate)
-                                             .build();
-        setTestSubject(testSubject);
+        setTestSubject(testSubject = createEngine());
     }
 
     @Override
@@ -74,23 +77,35 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
         mongoTemplate.snapshotCollection().deleteMany(new BasicDBObject());
     }
 
+    /**
+     * Mongo orders events in time instead of per global index. Thus events with mixing timestamps will be read in the
+     * time based order, if the {@link org.axonframework.extensions.mongo.eventsourcing.eventstore.documentperevent.DocumentPerEventStorageStrategy}
+     * is used.
+     */
+    @Test
     @Override
-    protected AbstractEventStorageEngine createEngine(EventUpcaster upcasterChain) {
-        return MongoEventStorageEngine.builder()
-                                      .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                      .upcasterChain(upcasterChain)
-                                      .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                      .mongoTemplate(mongoTemplate)
-                                      .build();
+    public void testCreateTokenAtTimeBeforeFirstEvent() {
+        Instant dateTimeBeforeFirstEvent = Instant.parse("2006-12-03T10:15:30.00Z");
+
+        DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
+        DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
+        DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:35.00Z"));
+        testSubject.appendEvents(event1, event2, event3);
+
+        TrackingToken result = testSubject.createTokenAt(dateTimeBeforeFirstEvent);
+
+        List<EventMessage<?>> readEvents = testSubject.readEvents(result, false).collect(toList());
+
+        assertEventStreamsById(Arrays.asList(event1, event3, event2), readEvents);
     }
 
     @Override
-    protected AbstractEventStorageEngine createEngine(PersistenceExceptionResolver persistenceExceptionResolver) {
-        return MongoEventStorageEngine.builder()
-                                      .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                      .persistenceExceptionResolver(persistenceExceptionResolver)
-                                      .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                      .mongoTemplate(mongoTemplate)
-                                      .build();
+    protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
+        MongoEventStorageEngine.Builder engineBuilder =
+                MongoEventStorageEngine.builder()
+                                       .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .mongoTemplate(mongoTemplate);
+        return customization.apply(engineBuilder).build();
     }
 }

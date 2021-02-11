@@ -79,7 +79,10 @@ public class EventEntry implements DomainEventData<Object> {
      * @param configuration Configuration containing the property names
      */
     public EventEntry(Document dbObject, EventEntryConfiguration configuration) {
-        aggregateIdentifier = (String) dbObject.get(configuration.aggregateIdentifierProperty());
+        String aggregateId = (String) dbObject.get(configuration.aggregateIdentifierProperty());
+        String eventId = (String) dbObject.get(configuration.eventIdentifierProperty());
+
+        aggregateIdentifier = eventId.equals(aggregateId) ? null : aggregateId;
         aggregateType = (String) dbObject.get(configuration.typeProperty());
         sequenceNumber = ((Number) dbObject.get(configuration.sequenceNumberProperty())).longValue();
         serializedPayload = dbObject.get(configuration.payloadProperty());
@@ -87,7 +90,7 @@ public class EventEntry implements DomainEventData<Object> {
         payloadType = (String) dbObject.get(configuration.payloadTypeProperty());
         payloadRevision = (String) dbObject.get(configuration.payloadRevisionProperty());
         serializedMetaData = dbObject.get(configuration.metaDataProperty());
-        eventIdentifier = (String) dbObject.get(configuration.eventIdentifierProperty());
+        eventIdentifier = eventId;
     }
 
     /**

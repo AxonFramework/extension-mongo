@@ -17,18 +17,23 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import org.axonframework.common.jdbc.PersistenceExceptionResolver;
-import org.axonframework.eventsourcing.eventstore.AbstractEventStorageEngine;
+import org.axonframework.eventhandling.DomainEventMessage;
+import org.axonframework.eventhandling.EventMessage;
+import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
-import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
+import static java.util.stream.Collectors.toList;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEvent;
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,10 +57,8 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
         mongoTemplate = MongoTemplateFactory.build(
                 MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
         );
-        testSubject = MongoEventStorageEngine.builder()
-                                             .mongoTemplate(mongoTemplate)
-                                             .build();
-        setTestSubject(testSubject);
+
+        setTestSubject(testSubject = createEngine());
     }
 
     @Override
@@ -87,19 +90,32 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
         assertFalse(testSubject.lastSequenceNumberFor("not_exist").isPresent());
     }
 
+    /**
+     * Mongo orders events in time instead of per global index. Thus events with mixing timestamps will be read in the
+     * time based order, if the {@link org.axonframework.extensions.mongo.eventsourcing.eventstore.documentperevent.DocumentPerEventStorageStrategy}
+     * is used.
+     */
+    @Test
     @Override
-    protected AbstractEventStorageEngine createEngine(EventUpcaster upcasterChain) {
-        return MongoEventStorageEngine.builder()
-                                      .upcasterChain(upcasterChain)
-                                      .mongoTemplate(mongoTemplate)
-                                      .build();
+    public void testCreateTokenAtTimeBeforeFirstEvent() {
+        Instant dateTimeBeforeFirstEvent = Instant.parse("2006-12-03T10:15:30.00Z");
+
+        DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
+        DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
+        DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:35.00Z"));
+        testSubject.appendEvents(event1, event2, event3);
+
+        TrackingToken result = testSubject.createTokenAt(dateTimeBeforeFirstEvent);
+
+        List<EventMessage<?>> readEvents = testSubject.readEvents(result, false).collect(toList());
+
+        assertEventStreamsById(Arrays.asList(event1, event3, event2), readEvents);
     }
 
     @Override
-    protected AbstractEventStorageEngine createEngine(PersistenceExceptionResolver persistenceExceptionResolver) {
-        return MongoEventStorageEngine.builder()
-                                      .persistenceExceptionResolver(persistenceExceptionResolver)
-                                      .mongoTemplate(mongoTemplate)
-                                      .build();
+    protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
+        MongoEventStorageEngine.Builder engineBuilder = MongoEventStorageEngine.builder()
+                                                                               .mongoTemplate(mongoTemplate);
+        return customization.apply(engineBuilder).build();
     }
 }
