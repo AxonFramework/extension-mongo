@@ -17,7 +17,6 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
-import org.axonframework.common.jdbc.PersistenceExceptionResolver;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
 import org.axonframework.eventhandling.EventMessage;
@@ -30,7 +29,6 @@ import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerialize
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.modelling.command.AggregateStreamCreationException;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.upcasting.event.EventUpcaster;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -40,6 +38,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 import static java.util.stream.Collectors.toList;
 import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.AGGREGATE;
@@ -71,13 +70,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
         mongoTemplate.eventCollection().dropIndexes();
         mongoTemplate.snapshotCollection().dropIndexes();
 
-        testSubject = MongoEventStorageEngine.builder()
-                                             .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                             .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                             .mongoTemplate(mongoTemplate)
-                                             .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                             .build();
-        setTestSubject(testSubject);
+        setTestSubject(testSubject = createEngine());
     }
 
     @Override
@@ -143,7 +136,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
     @Test
     @Override
     public void testStoreDuplicateEventWithoutExceptionResolver() {
-        testSubject = createEngine((PersistenceExceptionResolver) null);
+        testSubject = createEngine(builder -> builder.persistenceExceptionResolver(null));
         assertThrows(EventStoreException.class, () -> {
             testSubject.appendEvents(createEvent(0));
             testSubject.appendEvents(createEvent(0));
@@ -196,20 +189,13 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
     }
 
     @Override
-    protected MongoEventStorageEngine createEngine(EventUpcaster upcasterChain) {
-        return MongoEventStorageEngine.builder()
-                                      .upcasterChain(upcasterChain)
-                                      .mongoTemplate(mongoTemplate)
-                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                      .build();
-    }
-
-    @Override
-    protected MongoEventStorageEngine createEngine(PersistenceExceptionResolver persistenceExceptionResolver) {
-        return MongoEventStorageEngine.builder()
-                                      .persistenceExceptionResolver(persistenceExceptionResolver)
-                                      .mongoTemplate(mongoTemplate)
-                                      .storageStrategy(new DocumentPerCommitStorageStrategy())
-                                      .build();
+    protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
+        MongoEventStorageEngine.Builder engineBuilder =
+                MongoEventStorageEngine.builder()
+                                       .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .mongoTemplate(mongoTemplate)
+                                       .storageStrategy(new DocumentPerCommitStorageStrategy());
+        return customization.apply(engineBuilder).build();
     }
 }

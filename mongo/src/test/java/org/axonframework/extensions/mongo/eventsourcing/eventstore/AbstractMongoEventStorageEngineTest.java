@@ -39,7 +39,8 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Milan Savic
  */
-public abstract class AbstractMongoEventStorageEngineTest extends BatchingEventStorageEngineTest {
+public abstract class AbstractMongoEventStorageEngineTest
+        extends BatchingEventStorageEngineTest<MongoEventStorageEngine, MongoEventStorageEngine.Builder> {
 
     static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
