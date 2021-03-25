@@ -17,21 +17,21 @@
 package org.axonframework.extension.mongo.example
 
 import com.mongodb.client.MongoClient
-import org.axonframework.eventsourcing.eventstore.EmbeddedEventStore
+import org.axonframework.config.Configuration
+import org.axonframework.config.Configurer
+import org.axonframework.eventhandling.tokenstore.TokenStore
+import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition
+import org.axonframework.eventsourcing.SnapshotTriggerDefinition
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine
 import org.axonframework.extensions.mongo.DefaultMongoTemplate
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoEventStorageEngine
 import org.axonframework.extensions.mongo.eventsourcing.tokenstore.MongoTokenStore
 import org.axonframework.serialization.Serializer
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.scheduling.annotation.EnableScheduling
-import org.axonframework.eventsourcing.EventCountSnapshotTriggerDefinition
-
-import org.axonframework.eventsourcing.Snapshotter
-
-import org.axonframework.eventsourcing.SnapshotTriggerDefinition
 
 
 /**
@@ -49,28 +49,29 @@ fun main(args: Array<String>) {
 class MongoAxonExampleApplication {
 
     /**
-     * Configures Mongo as the Storage Engine.
+     * Uses the Configurer to wire everything together including Mongo as the Event and Token Store.
      */
-    @Bean
-    fun storageEngine(client: MongoClient) = MongoEventStorageEngine.builder()
+    @Autowired
+    fun configuration(configurer: Configurer, client: MongoClient) {
+        configurer
+            .configureEmbeddedEventStore { storageEngine(client) }
+            .eventProcessing { conf -> conf.registerTokenStore { tokenStore(client, it.serializer()) } }
+    }
+
+    /**
+     * Create a Mongo based Event Storage Engine.
+     */
+    fun storageEngine(client: MongoClient): EventStorageEngine = MongoEventStorageEngine.builder()
         .mongoTemplate(
             DefaultMongoTemplate.builder()
                 .mongoDatabase(client)
                 .build()
-        )
-        .build()
+        ).build()
 
     /**
-     * Configures to use Mongo embedded event store.
+     * Create a Mongo based Token Store.
      */
-    @Bean
-    fun eventStore(storageEngine: EventStorageEngine) = EmbeddedEventStore.builder().storageEngine(storageEngine).build()
-
-    /**
-     * Configures to use in-memory token store.
-     */
-    @Bean
-    fun tokenStore(client: MongoClient, serializer: Serializer) = MongoTokenStore.builder()
+    fun tokenStore(client: MongoClient, serializer: Serializer): TokenStore = MongoTokenStore.builder()
         .mongoTemplate(
             DefaultMongoTemplate.builder()
                 .mongoDatabase(client)
@@ -80,11 +81,12 @@ class MongoAxonExampleApplication {
         .build()
 
     /**
-     * Configures a snapshot trigger to create a Snapshot every 5 events. 5 is an arbitrary number used only for testing purposes just to show how the snapshots are stored on Mongo as well.
+     * Configures a snapshot trigger to create a Snapshot every 5 events.
+     * 5 is an arbitrary number used only for testing purposes just to show how the snapshots are stored on Mongo as well.
      */
     @Bean
-    fun mySnapshotTriggerDefinition(snapshotter: Snapshotter): SnapshotTriggerDefinition? {
-        return EventCountSnapshotTriggerDefinition(snapshotter, 5)
+    fun mySnapshotTriggerDefinition(configuration: Configuration): SnapshotTriggerDefinition {
+        return EventCountSnapshotTriggerDefinition(configuration.snapshotter(), 5)
     }
 
 }

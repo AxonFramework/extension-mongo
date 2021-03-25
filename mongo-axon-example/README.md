@@ -1,7 +1,8 @@
 # Mongo Axon Springboot Example
 
-This is an example SpringBoot application using the Mongo Axon extension.
-It uses the Mongo as the Event Store and Token Store as well.
+This is an example SpringBoot application using the Mongo Axon extension. It uses Mongo as the Event- and Token Store.
+
+> Although Mongodb might be a good fit for it, we have encountered some inefficiencies in regards to the Mongo Event Store implementation that you can read more about [here](https://docs.axoniq.io/reference-guide/extensions/mongo)
 
 ## How to run
 
