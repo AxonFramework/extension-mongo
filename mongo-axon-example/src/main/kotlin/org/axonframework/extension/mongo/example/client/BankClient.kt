@@ -47,7 +47,7 @@ class BankClient(
      */
     @Scheduled(initialDelay = 5_000, fixedDelay = 1000_000_000)
     fun createAccount() {
-        commandGateway.send<CompletableFuture<String>>(
+        commandGateway.send<String>(
             CreateBankAccountCommand(
                 bankAccountId = accountId,
                 overdraftLimit = 1000
@@ -60,7 +60,7 @@ class BankClient(
      */
     @Scheduled(initialDelay = 10_000, fixedDelay = 20_000)
     fun deposit() {
-        commandGateway.send<CompletableFuture<String>>(
+        commandGateway.send<Any?>(
             DepositMoneyCommand(
                 bankAccountId = accountId,
                 amountOfMoney = amount.toLong()

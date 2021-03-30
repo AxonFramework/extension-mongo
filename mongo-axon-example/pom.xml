@@ -74,6 +74,51 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
             </plugin>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <args>
+                        <arg>-Xjsr305=strict</arg>
+                    </args>
+                    <compilerPlugins>
+                        <plugin>spring</plugin>
+                    </compilerPlugins>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-allopen</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 </project>

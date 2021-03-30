@@ -28,8 +28,8 @@ import org.axonframework.extensions.mongo.eventsourcing.eventstore.MongoEventSto
 import org.axonframework.extensions.mongo.eventsourcing.tokenstore.MongoTokenStore
 import org.axonframework.serialization.Serializer
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.scheduling.annotation.EnableScheduling
 
@@ -38,7 +38,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
  * Starting point.
  */
 fun main(args: Array<String>) {
-    SpringApplication.run(MongoAxonExampleApplication::class.java, *args)
+    runApplication<MongoAxonExampleApplication>(*args)
 }
 
 /**
