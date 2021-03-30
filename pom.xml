@@ -22,6 +22,7 @@
     <version>4.5-SNAPSHOT</version>
     <modules>
         <module>mongo</module>
+        <module>mongo-axon-example</module>
     </modules>
     <packaging>pom</packaging>
 
