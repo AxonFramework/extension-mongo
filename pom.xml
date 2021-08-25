@@ -54,7 +54,7 @@
         <log4j.version>2.14.1</log4j.version>
 
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
-        <mockito.version>3.12.2</mockito.version>
+        <mockito.version>3.12.3</mockito.version>
         <testcontainers.version>1.16.0</testcontainers.version>
         <jackson.version>2.12.4</jackson.version>
 
