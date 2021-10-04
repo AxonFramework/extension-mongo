@@ -26,16 +26,20 @@ import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 import static com.mongodb.client.model.Projections.include;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
- * Implementations of the SagaRepository that stores Sagas and their associations in a Mongo Database. Each Saga and
- * its associations is stored as a single document.
+ * Implementations of the SagaRepository that stores Sagas and their associations in a Mongo Database. Each Saga and its
+ * associations is stored as a single document.
  *
  * @author Jettro Coenradie
  * @author Allard Buijze
@@ -43,21 +47,23 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  */
 public class MongoSagaStore implements SagaStore<Object> {
 
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     private final MongoTemplate mongoTemplate;
     private final Serializer serializer;
 
     /**
      * Instantiate a {@link MongoSagaStore} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoTemplate} is not {@code null}, and will throw an
-     * {@link AxonConfigurationException} if it is {@code null}.
+     * Will assert that the {@link MongoTemplate} is not {@code null}, and will throw an {@link
+     * AxonConfigurationException} if it is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link MongoSagaStore} instance
      */
     protected MongoSagaStore(Builder builder) {
         builder.validate();
         this.mongoTemplate = builder.mongoTemplate;
-        this.serializer = builder.serializer;
+        this.serializer = builder.serializer.get();
     }
 
     /**
@@ -156,7 +162,7 @@ public class MongoSagaStore implements SagaStore<Object> {
     public static class Builder {
 
         private MongoTemplate mongoTemplate;
-        private Serializer serializer = XStreamSerializer.builder().build();
+        private Supplier<Serializer> serializer;
 
         /**
          * Sets the {@link MongoTemplate} providing access to the collections.
@@ -178,7 +184,7 @@ public class MongoSagaStore implements SagaStore<Object> {
          */
         public Builder serializer(Serializer serializer) {
             assertNonNull(serializer, "Serializer may not be null");
-            this.serializer = serializer;
+            this.serializer = () -> serializer;
             return this;
         }
 
@@ -199,6 +205,16 @@ public class MongoSagaStore implements SagaStore<Object> {
          */
         protected void validate() throws AxonConfigurationException {
             assertNonNull(mongoTemplate, "The MongoTemplate is a hard requirement and should be provided");
+            if (serializer == null) {
+                logger.warn(
+                        "The default XStreamSerializer is used, whereas it is strongly recommended to configure"
+                                + " the security context of the XStream instance.",
+                        new AxonConfigurationException(
+                                "A default XStreamSerializer is used, without specifying the security context"
+                        )
+                );
+                serializer = XStreamSerializer::defaultSerializer;
+            }
         }
     }
 }

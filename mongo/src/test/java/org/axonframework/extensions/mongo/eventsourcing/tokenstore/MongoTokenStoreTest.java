@@ -19,6 +19,7 @@ package org.axonframework.extensions.mongo.eventsourcing.tokenstore;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.thoughtworks.xstream.XStream;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
@@ -276,7 +277,9 @@ class MongoTokenStoreTest {
     @Test
     void testStoreAndFetchTokenResultsInTheSameTokenWithXStreamSerializer() {
         TokenStore tokenStore = MongoTokenStore.builder()
-                                               .serializer(XStreamSerializer.builder().build())
+                                               .serializer(XStreamSerializer.builder()
+                                                                            .xStream(new XStream())
+                                                                            .build())
                                                .mongoTemplate(mongoTemplate)
                                                .claimTimeout(claimTimeout)
                                                .contentType(contentType)
