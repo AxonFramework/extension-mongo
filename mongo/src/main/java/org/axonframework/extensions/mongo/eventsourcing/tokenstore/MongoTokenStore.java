@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,12 @@ import com.mongodb.client.result.UpdateResult;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
+import org.axonframework.eventhandling.tokenstore.ConfigToken;
 import org.axonframework.eventhandling.tokenstore.GenericTokenEntry;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
 import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
+import org.axonframework.eventhandling.tokenstore.UnableToRetrieveIdentifierException;
 import org.axonframework.eventhandling.tokenstore.jpa.TokenEntry;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.serialization.Serializer;
@@ -47,8 +49,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,6 +77,9 @@ public class MongoTokenStore implements TokenStore {
     private final static Logger logger = LoggerFactory.getLogger(MongoTokenStore.class);
     private final static Clock clock = Clock.systemUTC();
 
+    private static final String CONFIG_TOKEN_ID = "__config";
+    private static final int CONFIG_SEGMENT = 0;
+
     private final MongoTemplate mongoTemplate;
     private final Serializer serializer;
     private final TemporalAmount claimTimeout;
@@ -93,7 +101,7 @@ public class MongoTokenStore implements TokenStore {
         this.claimTimeout = builder.claimTimeout;
         this.nodeId = builder.nodeId;
         this.contentType = builder.contentType;
-        if(builder.ensureIndexes){
+        if (builder.ensureIndexes) {
             ensureIndexes();
         }
     }
@@ -282,6 +290,40 @@ public class MongoTokenStore implements TokenStore {
         return ints;
     }
 
+    @Override
+    public Optional<String> retrieveStorageIdentifier() throws UnableToRetrieveIdentifierException {
+        try {
+            return Optional.of(getConfig()).map(configToken -> configToken.get("id"));
+        } catch (Exception e) {
+            throw new UnableToRetrieveIdentifierException(
+                    "Exception occurred while trying to establish storage identifier", e
+            );
+        }
+    }
+
+    private ConfigToken getConfig() {
+        Document document = mongoTemplate.trackingTokensCollection()
+                                         .find(and(
+                                                 eq("processorName", CONFIG_TOKEN_ID),
+                                                 eq("segment", CONFIG_SEGMENT)
+                                         ))
+                                         .first();
+        AbstractTokenEntry<?> token;
+
+        if (Objects.isNull(document)) {
+            token = new GenericTokenEntry<>(
+                    new ConfigToken(Collections.singletonMap("id", UUID.randomUUID().toString())),
+                    serializer, contentType, CONFIG_TOKEN_ID, CONFIG_SEGMENT
+            );
+            mongoTemplate.trackingTokensCollection()
+                         .insertOne(tokenEntryToDocument(token));
+        } else {
+            token = documentToTokenEntry(document);
+        }
+
+        return (ConfigToken) token.getToken(serializer);
+    }
+
     /**
      * Creates a filter that allows you to retrieve a claimable token entry with a given processor name and segment.
      *
@@ -351,8 +393,8 @@ public class MongoTokenStore implements TokenStore {
      * Builder class to instantiate a {@link MongoTokenStore}.
      * <p>
      * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
-     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output, the {@code contentType}
-     * to a {@code byte[]} {@link Class}, and the {@code ensureIndexes} to {@code true}. The {@link MongoTemplate} and
+     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output, the {@code contentType} to
+     * a {@code byte[]} {@link Class}, and the {@code ensureIndexes} to {@code true}. The {@link MongoTemplate} and
      * {@link Serializer} are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
