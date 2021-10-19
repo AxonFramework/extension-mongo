@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package org.axonframework.extensions.mongo.eventhandling.saga.repository;
 import com.mongodb.client.FindIterable;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.axonframework.modelling.saga.AssociationValue;
 import org.axonframework.modelling.saga.AssociationValues;
 import org.axonframework.modelling.saga.AssociationValuesImpl;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.*;
@@ -62,6 +62,7 @@ class MongoSagaStoreTest {
         mongoTemplate.sagaCollection().drop();
         testSubject = MongoSagaStore.builder()
                                     .mongoTemplate(mongoTemplate)
+                                    .serializer(TestSerializer.xStreamSerializer())
                                     .build();
     }
 
@@ -201,7 +202,7 @@ class MongoSagaStoreTest {
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
         SagaEntry<MyTestSaga> testSagaEntry = new SagaEntry<>(
-                identifier, saga, singleton(associationValue), XStreamSerializer.defaultSerializer()
+                identifier, saga, singleton(associationValue), TestSerializer.xStreamSerializer()
         );
         mongoTemplate.sagaCollection().insertOne(testSagaEntry.asDocument());
 
@@ -217,7 +218,7 @@ class MongoSagaStoreTest {
     void testSaveSaga() {
         String identifier = UUID.randomUUID().toString();
         MyTestSaga saga = new MyTestSaga();
-        Serializer serializer = XStreamSerializer.defaultSerializer();
+        Serializer serializer = TestSerializer.xStreamSerializer();
         mongoTemplate.sagaCollection()
                      .insertOne(new SagaEntry<>(identifier, saga, emptySet(), serializer).asDocument());
         SagaStore.Entry<MyTestSaga> loaded = testSubject.loadSaga(MyTestSaga.class, identifier);
@@ -243,7 +244,7 @@ class MongoSagaStoreTest {
         MyTestSaga saga = new MyTestSaga();
         AssociationValue associationValue = new AssociationValue("key", "value");
         SagaEntry<MyTestSaga> testSagaEntry = new SagaEntry<>(
-                identifier, saga, singleton(associationValue), XStreamSerializer.defaultSerializer()
+                identifier, saga, singleton(associationValue), TestSerializer.xStreamSerializer()
         );
         mongoTemplate.sagaCollection().insertOne(testSagaEntry.asDocument());
         testSubject.deleteSaga(MyTestSaga.class, identifier, singleton(associationValue));

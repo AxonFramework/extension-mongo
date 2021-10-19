@@ -30,6 +30,7 @@ import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
 import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
@@ -94,7 +95,7 @@ class MongoTokenStoreTest {
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
 
-        serializer = XStreamSerializer.defaultSerializer();
+        serializer = TestSerializer.xStreamSerializer();
         MongoTokenStore.Builder tokenStoreBuilder = MongoTokenStore.builder()
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)
