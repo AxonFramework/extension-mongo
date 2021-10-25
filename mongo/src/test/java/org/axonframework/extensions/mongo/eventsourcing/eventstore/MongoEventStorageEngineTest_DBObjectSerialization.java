@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
-import org.axonframework.serialization.Serializer;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -48,7 +48,6 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
 
     @Container
     private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
-    private static final Serializer DB_OBJECT_XSTREAM_SERIALIZER = DBObjectXStreamSerializer.builder().build();
 
     private MongoTemplate mongoTemplate;
     @SuppressWarnings("FieldCanBeLocal")
@@ -78,7 +77,7 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
     }
 
     /**
-     * Mongo orders events in time instead of per global index. Thus events with mixing timestamps will be read in the
+     * Mongo orders events in time instead of per global index. Thus, events with mixing timestamps will be read in the
      * time based order, if the {@link org.axonframework.extensions.mongo.eventsourcing.eventstore.documentperevent.DocumentPerEventStorageStrategy}
      * is used.
      */
@@ -103,8 +102,8 @@ class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEve
     protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
         MongoEventStorageEngine.Builder engineBuilder =
                 MongoEventStorageEngine.builder()
-                                       .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                       .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .snapshotSerializer(TestSerializer.dbObjectXStreamSerializer())
+                                       .eventSerializer(TestSerializer.dbObjectXStreamSerializer())
                                        .mongoTemplate(mongoTemplate);
         return customization.apply(engineBuilder).build();
     }

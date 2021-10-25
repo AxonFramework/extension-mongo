@@ -17,6 +17,7 @@
 package org.axonframework.extensions.mongo.utils;
 
 import com.thoughtworks.xstream.XStream;
+import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
 import org.axonframework.serialization.xml.CompactDriver;
 import org.axonframework.serialization.xml.XStreamSerializer;
 
@@ -40,5 +41,16 @@ public abstract class TestSerializer {
         return XStreamSerializer.builder()
                                 .xStream(new XStream(new CompactDriver()))
                                 .build();
+    }
+
+    /**
+     * Return a {@link DBObjectXStreamSerializer} using a default {@link XStream} instance.
+     *
+     * @return a {@link DBObjectXStreamSerializer} using a default {@link XStream} instance
+     */
+    public static DBObjectXStreamSerializer dbObjectXStreamSerializer() {
+        return DBObjectXStreamSerializer.builder()
+                                        .xStream(new XStream())
+                                        .build();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.axonframework.extensions.mongo.serialization;
 
+import com.thoughtworks.xstream.XStream;
 import org.axonframework.serialization.Revision;
 import org.axonframework.serialization.SerializedObject;
 import org.junit.jupiter.api.*;
@@ -45,7 +46,9 @@ class DBObjectXStreamSerializerTest {
 
     @BeforeEach
     void setUp() {
-        this.testSubject = DBObjectXStreamSerializer.builder().build();
+        this.testSubject = DBObjectXStreamSerializer.builder()
+                                                    .xStream(new XStream())
+                                                    .build();
     }
 
     @Test

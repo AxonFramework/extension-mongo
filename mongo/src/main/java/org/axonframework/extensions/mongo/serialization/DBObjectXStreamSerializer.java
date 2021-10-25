@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,9 @@ public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
     /**
      * Instantiate a Builder to be able to create a {@link DBObjectXStreamSerializer}.
      * <p>
-     * The {@link XStream} is defaulted to a {@link XStream#XStream()} call, the {@link Charset} is defaulted to a
-     * {@link Charset#forName(String)} using the {@code UTF-8} character set, the {@link RevisionResolver} defaults to
-     * an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to a {@link ChainingConverter}.
+     * The {@link Charset} is defaulted to a {@link Charset#forName(String)} using the {@code UTF-8} character set, the
+     * {@link RevisionResolver} defaults to an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to
+     * a {@link ChainingConverter}.
      * <p>
      * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the {@link
      * org.axonframework.eventhandling.GenericDomainEventMessage}, the {@link org.axonframework.commandhandling.GenericCommandMessage}
@@ -94,9 +94,9 @@ public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
     /**
      * Builder class to instantiate a {@link DBObjectXStreamSerializer}.
      * <p>
-     * The {@link XStream} is defaulted to a {@link XStream#XStream()} call, the {@link Charset} is defaulted to a
-     * {@link Charset#forName(String)} using the {@code UTF-8} character set, the {@link RevisionResolver} defaults to
-     * an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to a {@link ChainingConverter}.
+     * The {@link Charset} is defaulted to a {@link Charset#forName(String)} using the {@code UTF-8} character set, the
+     * {@link RevisionResolver} defaults to an {@link AnnotationRevisionResolver} and the {@link Converter} defaults to
+     * a {@link ChainingConverter}.
      * <p>
      * Upon instantiation, several defaults aliases are added to the XStream instance, for example for the {@link
      * org.axonframework.eventhandling.GenericDomainEventMessage}, the {@link org.axonframework.commandhandling.GenericCommandMessage},
@@ -108,13 +108,6 @@ public class DBObjectXStreamSerializer extends AbstractXStreamSerializer {
      */
     public static class Builder extends AbstractXStreamSerializer.Builder {
 
-        private Builder() {
-            xStream(new XStream());
-        }
-
-        /**
-         * {@inheritDoc} Defaults to a {@link XStream#XStream()} call.
-         */
         @Override
         public Builder xStream(XStream xStream) {
             super.xStream(xStream);

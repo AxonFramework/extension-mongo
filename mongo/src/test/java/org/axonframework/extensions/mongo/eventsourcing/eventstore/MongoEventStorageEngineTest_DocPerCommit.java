@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,9 @@ import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventsourcing.eventstore.EventStoreException;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy;
-import org.axonframework.extensions.mongo.serialization.DBObjectXStreamSerializer;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.axonframework.modelling.command.AggregateStreamCreationException;
-import org.axonframework.serialization.Serializer;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -55,7 +54,6 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @Container
     private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
-    private static final Serializer DB_OBJECT_XSTREAM_SERIALIZER = DBObjectXStreamSerializer.builder().build();
 
     private MongoTemplate mongoTemplate;
     private MongoEventStorageEngine testSubject;
@@ -192,8 +190,8 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
     protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
         MongoEventStorageEngine.Builder engineBuilder =
                 MongoEventStorageEngine.builder()
-                                       .snapshotSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
-                                       .eventSerializer(DB_OBJECT_XSTREAM_SERIALIZER)
+                                       .snapshotSerializer(TestSerializer.dbObjectXStreamSerializer())
+                                       .eventSerializer(TestSerializer.dbObjectXStreamSerializer())
                                        .mongoTemplate(mongoTemplate)
                                        .storageStrategy(new DocumentPerCommitStorageStrategy());
         return customization.apply(engineBuilder).build();
