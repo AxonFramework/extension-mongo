@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,20 @@ import com.mongodb.client.MongoCursor;
 import com.thoughtworks.xstream.XStream;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
 import org.axonframework.eventhandling.TrackingToken;
+import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
+import org.axonframework.eventhandling.tokenstore.ConfigToken;
+import org.axonframework.eventhandling.tokenstore.GenericTokenEntry;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.UnableToClaimTokenException;
 import org.axonframework.eventhandling.tokenstore.UnableToInitializeTokenException;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -40,8 +45,11 @@ import java.time.Duration;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -87,7 +95,7 @@ class MongoTokenStoreTest {
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
 
-        serializer = XStreamSerializer.defaultSerializer();
+        serializer = TestSerializer.xStreamSerializer();
         MongoTokenStore.Builder tokenStoreBuilder = MongoTokenStore.builder()
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)
@@ -402,5 +410,50 @@ class MongoTokenStoreTest {
             }
         }
         assertTrue(indexFound);
+    }
+
+    @Test
+    void testRetrieveStorageIdentifierCreatesAndReturnsConfigTokenIdentifier() {
+        String expectedConfigTokenProcessorName = "__config";
+        int expectedConfigTokenSegmentId = 0;
+        Bson configTokenBson =
+                and(eq("processorName", expectedConfigTokenProcessorName), eq("segment", expectedConfigTokenSegmentId));
+
+        assertNull(trackingTokensCollection.find(configTokenBson).first());
+
+
+        Optional<String> result = tokenStore.retrieveStorageIdentifier();
+
+        assertTrue(result.isPresent());
+        assertFalse(result.get().isEmpty());
+
+        assertNotNull(trackingTokensCollection.find(configTokenBson).first());
+    }
+
+    @Test
+    void testRetrieveStorageIdentifierReturnsExistingConfigTokenIdentifier() {
+        String expectedStorageIdentifier = UUID.randomUUID().toString();
+        String expectedConfigTokenProcessorName = "__config";
+        int expectedConfigTokenSegmentId = 0;
+
+        AbstractTokenEntry<?> testTokenEntry = new GenericTokenEntry<>(
+                new ConfigToken(Collections.singletonMap("id", expectedStorageIdentifier)),
+                serializer, contentType, expectedConfigTokenProcessorName, expectedConfigTokenSegmentId
+        );
+        Document testConfigTokenDocument = new Document("processorName", testTokenEntry.getProcessorName())
+                .append("segment", testTokenEntry.getSegment())
+                .append("owner", testTokenEntry.getOwner())
+                .append("timestamp", testTokenEntry.timestamp().toEpochMilli())
+                .append("token", testTokenEntry.getSerializedToken().getData())
+                .append("tokenType", testTokenEntry.getSerializedToken().getType().getName());
+
+        mongoTemplate.trackingTokensCollection()
+                     .insertOne(testConfigTokenDocument);
+
+        Optional<String> result = tokenStore.retrieveStorageIdentifier();
+
+        assertTrue(result.isPresent());
+        String resultStorageIdentifier = result.get();
+        assertEquals(expectedStorageIdentifier, resultStorageIdentifier);
     }
 }

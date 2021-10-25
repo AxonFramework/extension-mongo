@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -114,8 +115,11 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
 
     @Override
     protected MongoEventStorageEngine createEngine(UnaryOperator<MongoEventStorageEngine.Builder> customization) {
-        MongoEventStorageEngine.Builder engineBuilder = MongoEventStorageEngine.builder()
-                                                                               .mongoTemplate(mongoTemplate);
+        MongoEventStorageEngine.Builder engineBuilder =
+                MongoEventStorageEngine.builder()
+                                       .snapshotSerializer(TestSerializer.xStreamSerializer())
+                                       .eventSerializer(TestSerializer.xStreamSerializer())
+                                       .mongoTemplate(mongoTemplate);
         return customization.apply(engineBuilder).build();
     }
 }

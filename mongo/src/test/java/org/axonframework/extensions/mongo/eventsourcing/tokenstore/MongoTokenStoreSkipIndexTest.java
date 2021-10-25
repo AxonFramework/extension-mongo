@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,17 @@ import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
+import org.axonframework.extensions.mongo.utils.TestSerializer;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.temporal.TemporalAmount;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -57,7 +56,7 @@ class MongoTokenStoreSkipIndexTest {
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
         String testOwner = "testOwner";
-        Serializer serializer = XStreamSerializer.defaultSerializer();
+        Serializer serializer = TestSerializer.xStreamSerializer();
         MongoTokenStore.Builder tokenStoreBuilder = MongoTokenStore.builder()
                                                                    .mongoTemplate(mongoTemplate)
                                                                    .serializer(serializer)
