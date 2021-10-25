@@ -19,7 +19,7 @@
 
     <groupId>org.axonframework.extensions.mongo</groupId>
     <artifactId>axon-mongo-parent</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.5.1-SNAPSHOT</version>
     <modules>
         <module>mongo</module>
         <module>mongo-axon-example</module>
