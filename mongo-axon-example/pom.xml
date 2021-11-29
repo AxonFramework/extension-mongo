@@ -32,7 +32,7 @@
     <properties>
         <kotlin.version>1.6.0</kotlin.version>
         <kotlin-logging-jvm.version>2.1.0</kotlin-logging-jvm.version>
-        <spring.boot.version>2.6.0</spring.boot.version>
+        <spring.boot.version>2.6.1</spring.boot.version>
     </properties>
 
     <dependencies>
