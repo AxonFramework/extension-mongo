@@ -48,7 +48,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <axon.version>4.5.8</axon.version>
-        <mongo.driver.version>4.4.1</mongo.driver.version>
+        <mongo.driver.version>4.4.2</mongo.driver.version>
 
         <slf4j.version>1.7.36</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
