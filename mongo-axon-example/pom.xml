@@ -30,7 +30,7 @@
     <description>Example module for the Mongo Extension of Axon Framework</description>
 
     <properties>
-        <kotlin.version>1.6.10</kotlin.version>
+        <kotlin.version>1.6.20</kotlin.version>
         <kotlin-logging-jvm.version>2.1.21</kotlin-logging-jvm.version>
         <spring.boot.version>2.6.5</spring.boot.version>
     </properties>
