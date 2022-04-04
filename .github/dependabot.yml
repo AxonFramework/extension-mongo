@@ -12,8 +12,12 @@ updates:
     - "Status: In Progress"
   # Add reviewers
   reviewers:
+    - "gklijs"
     - "lfgcampos"
+    - "Morlack"
+    - "sandjelkovic"
     - "smcvb"
+    - "YvonneCeelie"
   milestone: 8
 - package-ecosystem: maven
   directory: "/"
@@ -27,6 +31,10 @@ updates:
     - "Status: In Progress"
   # Add reviewers
   reviewers:
+    - "gklijs"
     - "lfgcampos"
+    - "Morlack"
+    - "sandjelkovic"
     - "smcvb"
+    - "YvonneCeelie"
   milestone: 8
