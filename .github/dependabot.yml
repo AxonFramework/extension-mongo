@@ -12,8 +12,7 @@ updates:
     - "Status: In Progress"
   # Add reviewers
   reviewers:
-    - "gklijs"
-    - "lfgcampos"
+    - "gklijs" # Main
     - "Morlack"
     - "sandjelkovic"
     - "smcvb"
@@ -31,8 +30,7 @@ updates:
     - "Status: In Progress"
   # Add reviewers
   reviewers:
-    - "gklijs"
-    - "lfgcampos"
+    - "gklijs" # Main
     - "Morlack"
     - "sandjelkovic"
     - "smcvb"
