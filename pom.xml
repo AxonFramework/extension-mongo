@@ -58,7 +58,7 @@
         <testcontainers.version>1.17.0</testcontainers.version>
         <jackson.version>2.13.2</jackson.version>
 
-        <spring.version>5.3.18</spring.version>
+        <spring.version>5.3.19</spring.version>
         <commons-io.version>2.11.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
