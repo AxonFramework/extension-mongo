@@ -55,7 +55,7 @@
 
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
         <mockito.version>4.4.0</mockito.version>
-        <testcontainers.version>1.17.0</testcontainers.version>
+        <testcontainers.version>1.17.1</testcontainers.version>
         <jackson.version>2.13.2</jackson.version>
 
         <spring.version>5.3.19</spring.version>
