@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
@@ -455,5 +457,81 @@ class MongoTokenStoreTest {
         assertTrue(result.isPresent());
         String resultStorageIdentifier = result.get();
         assertEquals(expectedStorageIdentifier, resultStorageIdentifier);
+    }
+
+    @Test
+    void storeTokenConcurrently() throws InterruptedException {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+        TrackingToken someToken = new GlobalSequenceTrackingToken(42);
+        testConcurrency(
+                () -> {
+                    tokenStore.storeToken(someToken, testProcessorName, testSegment);
+                    return true;
+                },
+                () -> {
+                    tokenStoreDifferentOwner.storeToken(someToken, testProcessorName, testSegment);
+                    return true;
+                });
+    }
+
+    @Test
+    void deleteTokenConcurrently() throws InterruptedException {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+        TrackingToken someToken = new GlobalSequenceTrackingToken(42);
+        tokenStore.storeToken(someToken, testProcessorName, testSegment);
+        testConcurrency(
+                () -> {
+                    tokenStore.deleteToken(testProcessorName, testSegment);
+                    return true;
+                },
+                () -> {
+                    tokenStoreDifferentOwner.deleteToken(testProcessorName, testSegment);
+                    return true;
+                });
+    }
+
+    @Test
+    void fetchTokenConcurrently() throws InterruptedException {
+        tokenStore.initializeSegment(null, testProcessorName, testSegment);
+        TrackingToken someToken = new GlobalSequenceTrackingToken(42);
+        tokenStore.storeToken(someToken, testProcessorName, testSegment);
+        tokenStore.releaseClaim(testProcessorName, testSegment);
+        TrackingToken result = testConcurrency(
+                () -> tokenStore.fetchToken(testProcessorName, testSegment),
+                () -> tokenStoreDifferentOwner.fetchToken(testProcessorName, testSegment)
+        );
+        assertEquals(someToken, result);
+    }
+
+    @Test
+    void initializeSegmentWithTokenConcurrently() throws InterruptedException {
+        TrackingToken initialToken = new GlobalSequenceTrackingToken(42);
+        testConcurrency(
+                () -> {
+                    tokenStore.initializeSegment(initialToken, testProcessorName, testSegment);
+                    return true;
+                },
+                () -> {
+                    tokenStoreDifferentOwner.initializeSegment(initialToken, testProcessorName, testSegment);
+                    return true;
+                });
+    }
+
+    private <T> T testConcurrency(Supplier<T> s1, Supplier<T> s2) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        AtomicReference<T> r1 = new AtomicReference<>(null);
+        AtomicReference<T> r2 = new AtomicReference<>(null);
+        executor.execute(() -> r1.set(s1.get()));
+        executor.execute(() -> r2.set(s2.get()));
+        executor.shutdown();
+        boolean done = executor.awaitTermination(6L, TimeUnit.SECONDS);
+        assertTrue(done, "should complete in 6 seconds");
+        if (r1.get() == null) {
+            assertNotNull(r2.get(), "at least one of the results should be valid");
+            return r2.get();
+        } else {
+            assertNull(r2.get(), "only one of the results should be valid");
+            return r1.get();
+        }
     }
 }
