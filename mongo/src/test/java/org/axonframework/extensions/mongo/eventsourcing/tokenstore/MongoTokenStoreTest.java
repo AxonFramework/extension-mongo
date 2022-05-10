@@ -21,6 +21,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.thoughtworks.xstream.XStream;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
+import org.axonframework.eventhandling.Segment;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
 import org.axonframework.eventhandling.tokenstore.ConfigToken;
@@ -224,6 +225,18 @@ class MongoTokenStoreTest {
         assertArrayEquals(new int[]{0, 1, 2}, tokenStore.fetchSegments("processor1"));
         assertArrayEquals(new int[]{0}, tokenStore.fetchSegments("processor2"));
         assertArrayEquals(new int[0], tokenStore.fetchSegments("processor3"));
+    }
+
+    @Test
+    void testFetchAvailableSegments() {
+        tokenStore.initializeTokenSegments("processor1", 3);
+        tokenStoreDifferentOwner.fetchToken("processor1", 0);
+
+        List<Segment> availableSegments = tokenStore.fetchAvailableSegments("processor1");
+        assertEquals(2, availableSegments.size());
+        assertEquals(3, tokenStoreDifferentOwner.fetchAvailableSegments("processor1").size());
+        assertEquals(Segment.computeSegment(1, 0, 1, 2), availableSegments.get(0));
+        assertEquals(Segment.computeSegment(2, 0, 1, 2), availableSegments.get(1));
     }
 
     @Test

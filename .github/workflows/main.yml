@@ -41,7 +41,12 @@ jobs:
       - name: Build with Coverage reports
         if: matrix.sonar-enabled
         run: |
-          ./mvnw -B -U -Dcoverage clean verify
+          ./mvnw -B -U -Pcoverage clean verify
+
+      - name: Build coverage report
+        if: matrix.sonar-enabled
+        run: | # no clean
+          ./mvnw -B -U -Pcoverage-aggregate 
 
       - name: Sonar Analysis
         if: matrix.sonar-enabled

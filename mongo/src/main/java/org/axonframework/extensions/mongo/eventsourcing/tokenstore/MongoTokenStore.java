@@ -27,6 +27,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.BuilderUtils;
+import org.axonframework.eventhandling.Segment;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
 import org.axonframework.eventhandling.tokenstore.ConfigToken;
@@ -56,6 +57,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Projections.*;
@@ -130,7 +133,8 @@ public class MongoTokenStore implements TokenStore {
      * {@inheritDoc}
      */
     @Override
-    public void storeToken(TrackingToken token, String processorName, int segment) throws UnableToClaimTokenException {
+    public void storeToken(@Nullable TrackingToken token, @Nonnull String processorName, int segment)
+            throws UnableToClaimTokenException {
         updateToken(token, processorName, segment);
     }
 
@@ -159,7 +163,8 @@ public class MongoTokenStore implements TokenStore {
      * {@inheritDoc}
      */
     @Override
-    public void initializeTokenSegments(String processorName, int segmentCount) throws UnableToClaimTokenException {
+    public void initializeTokenSegments(@Nonnull String processorName, int segmentCount)
+            throws UnableToClaimTokenException {
         initializeTokenSegments(processorName, segmentCount, null);
     }
 
@@ -167,9 +172,9 @@ public class MongoTokenStore implements TokenStore {
      * {@inheritDoc}
      */
     @Override
-    public void initializeTokenSegments(String processorName,
+    public void initializeTokenSegments(@Nonnull String processorName,
                                         int segmentCount,
-                                        TrackingToken initialToken) throws UnableToClaimTokenException {
+                                        @Nullable TrackingToken initialToken) throws UnableToClaimTokenException {
         if (fetchSegments(processorName).length > 0) {
             throw new UnableToClaimTokenException(
                     "Unable to initialize segments. Some tokens were already present for the given processor."
@@ -190,7 +195,7 @@ public class MongoTokenStore implements TokenStore {
      * {@inheritDoc}
      */
     @Override
-    public TrackingToken fetchToken(String processorName, int segment) throws UnableToClaimTokenException {
+    public TrackingToken fetchToken(@Nonnull String processorName, int segment) throws UnableToClaimTokenException {
         return loadToken(processorName, segment).getToken(serializer);
     }
 
@@ -220,7 +225,7 @@ public class MongoTokenStore implements TokenStore {
     }
 
     @Override
-    public void extendClaim(String processorName, int segment) throws UnableToClaimTokenException {
+    public void extendClaim(@Nonnull String processorName, int segment) throws UnableToClaimTokenException {
         UpdateResult updateResult =
                 mongoTemplate.trackingTokensCollection()
                              .updateOne(and(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
@@ -239,7 +244,7 @@ public class MongoTokenStore implements TokenStore {
      * {@inheritDoc}
      */
     @Override
-    public void releaseClaim(String processorName, int segment) {
+    public void releaseClaim(@Nonnull String processorName, int segment) {
         UpdateResult updateResult = mongoTemplate.trackingTokensCollection()
                                                  .updateOne(and(
                                                          eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
@@ -252,8 +257,8 @@ public class MongoTokenStore implements TokenStore {
     }
 
     @Override
-    public void initializeSegment(TrackingToken token,
-                                  String processorName,
+    public void initializeSegment(@Nullable TrackingToken token,
+                                  @Nonnull String processorName,
                                   int segment) throws UnableToInitializeTokenException {
         try {
             AbstractTokenEntry<?> tokenEntry =
@@ -271,7 +276,7 @@ public class MongoTokenStore implements TokenStore {
     }
 
     @Override
-    public void deleteToken(String processorName, int segment) throws UnableToClaimTokenException {
+    public void deleteToken(@Nonnull String processorName, int segment) throws UnableToClaimTokenException {
         DeleteResult deleteResult = mongoTemplate.trackingTokensCollection()
                                                  .deleteOne(and(
                                                          eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
@@ -290,7 +295,7 @@ public class MongoTokenStore implements TokenStore {
     }
 
     @Override
-    public int[] fetchSegments(String processorName) {
+    public int[] fetchSegments(@Nonnull String processorName) {
         ArrayList<Integer> segments = mongoTemplate.trackingTokensCollection()
                                                    .find(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName))
                                                    .sort(ascending(SEGMENT_PROPERTY_NAME))
@@ -303,6 +308,18 @@ public class MongoTokenStore implements TokenStore {
             ints[i] = segments.get(i);
         }
         return ints;
+    }
+
+    @Override
+    public List<Segment> fetchAvailableSegments(@Nonnull String processorName) {
+        int[] allSegments = fetchSegments(processorName);
+        return mongoTemplate.trackingTokensCollection()
+                            .find(availableTokenEntryFilter(processorName))
+                            .sort(ascending(SEGMENT_PROPERTY_NAME))
+                            .projection(fields(include(SEGMENT_PROPERTY_NAME), excludeId()))
+                            .map(d -> d.get(SEGMENT_PROPERTY_NAME, Integer.class))
+                            .map(s -> Segment.computeSegment(s, allSegments))
+                            .into(new ArrayList<>());
     }
 
     @Override
@@ -350,6 +367,23 @@ public class MongoTokenStore implements TokenStore {
         return and(
                 eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
                 eq(SEGMENT_PROPERTY_NAME, segment),
+                or(
+                        eq(OWNER_PROPERTY_NAME, nodeId),
+                        eq(OWNER_PROPERTY_NAME, null),
+                        lt(TIMESTAMP_PROPERTY_NAME, clock.instant().minus(claimTimeout).toEpochMilli())
+                )
+        );
+    }
+
+    /**
+     * Creates a filter that allows you to retrieve all available token entries with a given processor name.
+     *
+     * @param processorName the processor name of the token entry
+     * @return a {@link Bson} defining the filter
+     */
+    private Bson availableTokenEntryFilter(String processorName) {
+        return and(
+                eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
                 or(
                         eq(OWNER_PROPERTY_NAME, nodeId),
                         eq(OWNER_PROPERTY_NAME, null),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,15 @@ import org.bson.Document;
  */
 public class EventEntryConfiguration {
 
-    private final String timestampProperty, eventIdentifierProperty, aggregateIdentifierProperty,
-            sequenceNumberProperty, typeProperty, payloadTypeProperty, payloadRevisionProperty, payloadProperty,
-            metaDataProperty;
+    private final String timestampProperty;
+    private final String eventIdentifierProperty;
+    private final String aggregateIdentifierProperty;
+    private final String sequenceNumberProperty;
+    private final String typeProperty;
+    private final String payloadTypeProperty;
+    private final String payloadRevisionProperty;
+    private final String payloadProperty;
+    private final String metaDataProperty;
 
     /**
      * Returns the default {@link EventEntryConfiguration}.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.bson.types.Binary;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -53,7 +54,7 @@ public class SagaEntry<T> {
 
     private final byte[] serializedSaga;
 
-    private volatile T saga;
+    private final AtomicReference<T> saga = new AtomicReference<>();
     private final Set<AssociationValue> associationValues;
 
     /**
@@ -70,7 +71,7 @@ public class SagaEntry<T> {
         SerializedObject<byte[]> serialized = serializer.serialize(saga, byte[].class);
         this.serializedSaga = serialized.getData();
         this.sagaType = serializer.typeForClass(saga.getClass()).getName();
-        this.saga = saga;
+        this.saga.set(saga);
         this.associationValues = new HashSet<>(associationValues);
     }
 
@@ -93,10 +94,13 @@ public class SagaEntry<T> {
      * @return the Saga instance stored in this entry
      */
     public T getSaga(Serializer serializer) {
-        if (saga != null) {
-            return saga;
-        }
-        return serializer.deserialize(new SimpleSerializedObject<>(serializedSaga, byte[].class, sagaType, ""));
+        return saga.updateAndGet(current -> {
+            if (current != null) {
+                return current;
+            } else {
+                return serializer.deserialize(new SimpleSerializedObject<>(serializedSaga, byte[].class, sagaType, ""));
+            }
+        });
     }
 
     /**
@@ -139,7 +143,7 @@ public class SagaEntry<T> {
         return values;
     }
 
-    private static List toDBList(Iterable<AssociationValue> associationValues) {
+    private static List<Object> toDBList(Iterable<AssociationValue> associationValues) {
         BasicDBList list = new BasicDBList();
         for (AssociationValue associationValue : associationValues) {
             list.add(new BasicDBObject(ASSOCIATION_KEY, associationValue.getKey())

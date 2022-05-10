@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,17 +235,6 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
          */
         public DefaultMongoTemplate build() {
             return new DefaultMongoTemplate(this);
-        }
-
-        /**
-         * Validates whether the fields contained in this Builder are set accordingly.
-         *
-         * @throws AxonConfigurationException if one field is asserted to be incorrect according to the Builder's
-         *                                    specifications
-         */
-        @Override
-        protected void validate() throws AxonConfigurationException {
-            super.validate();
         }
     }
 }
