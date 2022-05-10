@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,11 @@ import org.axonframework.extensions.mongo.eventsourcing.eventstore.documentperev
  */
 public class CommitEntryConfiguration {
 
-    private final String firstTimestampProperty, lastTimestampProperty, firstSequenceNumberProperty,
-            lastSequenceNumberProperty, eventsProperty;
+    private final String firstTimestampProperty;
+    private final String lastTimestampProperty;
+    private final String firstSequenceNumberProperty;
+    private final String lastSequenceNumberProperty;
+    private final String eventsProperty;
 
     /**
      * Returns the default {@link CommitEntryConfiguration}.

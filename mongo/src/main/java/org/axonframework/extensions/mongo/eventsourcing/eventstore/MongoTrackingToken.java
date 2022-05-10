@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,10 +105,10 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
                                   eventIdentifier));
         }
         long millis = timestamp.toEpochMilli();
-        LinkedHashMap<String, Long> trackedEvents = new LinkedHashMap<>(this.trackedEvents);
-        trackedEvents.put(eventIdentifier, millis);
+        LinkedHashMap<String, Long> events = new LinkedHashMap<>(this.trackedEvents);
+        events.put(eventIdentifier, millis);
         long newTimestamp = Math.max(millis, this.timestamp);
-        return new MongoTrackingToken(newTimestamp, trim(trackedEvents, newTimestamp, lookBackTime));
+        return new MongoTrackingToken(newTimestamp, trim(events, newTimestamp, lookBackTime));
     }
 
     private Map<String, Long> trim(LinkedHashMap<String, Long> priorEvents, long currentTime, Duration lookBackTime) {
@@ -179,7 +179,6 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public TrackingToken lowerBound(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
-        //noinspection ConstantConditions
         MongoTrackingToken otherToken = (MongoTrackingToken) other;
 
         Map<String, Long> intersection = new HashMap<>(this.trackedEvents);
@@ -194,18 +193,15 @@ public class MongoTrackingToken implements TrackingToken, Serializable {
     @Override
     public TrackingToken upperBound(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
-        //noinspection ConstantConditions
-        long timestamp = max(((MongoTrackingToken) other).timestamp, this.timestamp);
+        long maxTimestamp = max(((MongoTrackingToken) other).timestamp, this.timestamp);
         Map<String, Long> events = new HashMap<>(trackedEvents);
-        //noinspection ConstantConditions
         events.putAll(((MongoTrackingToken) other).trackedEvents);
-        return new MongoTrackingToken(timestamp, events);
+        return new MongoTrackingToken(maxTimestamp, events);
     }
 
     @Override
     public boolean covers(TrackingToken other) {
         Assert.isTrue(other instanceof MongoTrackingToken, () -> "Incompatible token type provided.");
-        //noinspection ConstantConditions
         MongoTrackingToken otherToken = (MongoTrackingToken) other;
 
         long oldest = this.trackedEvents.values().stream().min(Comparator.naturalOrder()).orElse(0L);

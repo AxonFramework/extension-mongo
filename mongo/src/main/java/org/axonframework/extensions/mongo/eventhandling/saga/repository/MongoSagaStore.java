@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package org.axonframework.extensions.mongo.eventhandling.saga.repository;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCursor;
+import com.thoughtworks.xstream.XStream;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.modelling.saga.AssociationValue;
 import org.axonframework.modelling.saga.AssociationValues;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.xml.CompactDriver;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -213,7 +215,9 @@ public class MongoSagaStore implements SagaStore<Object> {
                                 "A default XStreamSerializer is used, without specifying the security context"
                         )
                 );
-                serializer = XStreamSerializer::defaultSerializer;
+                serializer = () -> XStreamSerializer.builder()
+                                                    .xStream(new XStream(new CompactDriver()))
+                                                    .build();
             }
         }
     }

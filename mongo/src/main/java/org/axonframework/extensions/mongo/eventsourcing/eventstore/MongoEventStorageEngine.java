@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
@@ -147,7 +148,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
     }
 
     @Override
-    public Optional<Long> lastSequenceNumberFor(String aggregateIdentifier) {
+    public Optional<Long> lastSequenceNumberFor(@Nonnull String aggregateIdentifier) {
         return storageStrategy.lastSequenceNumberFor(template.eventCollection(), aggregateIdentifier);
     }
 
@@ -162,7 +163,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
     }
 
     @Override
-    public TrackingToken createTokenAt(Instant dateTime) {
+    public TrackingToken createTokenAt(@Nonnull Instant dateTime) {
         return MongoTrackingToken.of(dateTime, Collections.emptyMap());
     }
 

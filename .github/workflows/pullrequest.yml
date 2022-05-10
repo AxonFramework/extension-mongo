@@ -38,7 +38,12 @@ jobs:
       - name: Build with Coverage reports
         if: matrix.sonar-enabled
         run: |
-          ./mvnw -B -U -Possrh -Dcoverage clean verify
+          ./mvnw -B -U -Pcoverage clean verify
+
+      - name: Build coverage report
+        if: matrix.sonar-enabled
+        run: | # no clean
+          ./mvnw -B -U -Pcoverage-aggregate   
 
       - name: Sonar Analysis
         if: ${{ success() && matrix.sonar-enabled && github.event.pull_request.head.repo.full_name == github.repository }}
