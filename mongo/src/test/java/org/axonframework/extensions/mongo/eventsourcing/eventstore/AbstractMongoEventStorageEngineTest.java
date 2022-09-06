@@ -48,19 +48,19 @@ public abstract class AbstractMongoEventStorageEngineTest
 
     @Test
     @Override
-    public void testUniqueKeyConstraintOnEventIdentifier() {
+    public void uniqueKeyConstraintOnEventIdentifier() {
         logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
     }
 
     @Test
     @Override
-    public void testUniqueKeyConstraintOnFirstEventIdentifierThrowsAggregateIdentifierAlreadyExistsException() {
+    public void uniqueKeyConstraintOnFirstEventIdentifierThrowsAggregateIdentifierAlreadyExistsException() {
         logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
     }
 
     @Test
     @Override
-    public void testCreateTailToken() {
+    public void createTailToken() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:10.00Z"));
         testSubject.appendEvents(event1);
 
@@ -80,7 +80,7 @@ public abstract class AbstractMongoEventStorageEngineTest
 
     @Test
     @Override
-    public void testCreateTokenAt() {
+    public void createTokenAt() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:00.01Z"));
         testSubject.appendEvents(event1);
 
@@ -100,7 +100,7 @@ public abstract class AbstractMongoEventStorageEngineTest
 
     @Test
     @Override
-    public void testCreateTokenAtExactTime() {
+    public void createTokenAtExactTime() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.01Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:35.00Z"));
@@ -117,7 +117,7 @@ public abstract class AbstractMongoEventStorageEngineTest
 
     @Test
     @Override
-    public void testCreateTokenWithUnorderedEvents() {
+    public void createTokenWithUnorderedEvents() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:50.00Z"));
@@ -135,7 +135,7 @@ public abstract class AbstractMongoEventStorageEngineTest
     }
 
     @Test
-    public void testStoreAndLoadSnapshot() {
+    public void storeAndLoadSnapshot() {
         testSubject.storeSnapshot(createEvent(0));
         testSubject.storeSnapshot(createEvent(1));
         testSubject.storeSnapshot(createEvent(3));

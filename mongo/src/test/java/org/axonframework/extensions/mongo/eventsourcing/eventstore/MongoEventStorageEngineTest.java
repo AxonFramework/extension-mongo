@@ -98,7 +98,7 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
      */
     @Test
     @Override
-    public void testCreateTokenAtTimeBeforeFirstEvent() {
+    public void createTokenAtTimeBeforeFirstEvent() {
         Instant dateTimeBeforeFirstEvent = Instant.parse("2006-12-03T10:15:30.00Z");
 
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));

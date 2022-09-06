@@ -127,13 +127,13 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @Test
     @Override
-    public void testStoreDuplicateFirstEventWithExceptionTranslatorThrowsAggregateIdentifierAlreadyExistsException() {
+    public void storeDuplicateFirstEventWithExceptionTranslatorThrowsAggregateIdentifierAlreadyExistsException() {
         logger.info("Unique event identifier is not currently guaranteed in the Mongo Event Storage Engine");
     }
 
     @Test
     @Override
-    public void testStoreDuplicateEventWithoutExceptionResolver() {
+    public void storeDuplicateEventWithoutExceptionResolver() {
         testSubject = createEngine(builder -> builder.persistenceExceptionResolver(null));
         assertThrows(EventStoreException.class, () -> {
             testSubject.appendEvents(createEvent(0));
@@ -143,7 +143,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @Test
     @Override
-    public void testStoreDuplicateEventWithExceptionTranslator() {
+    public void storeDuplicateEventWithExceptionTranslator() {
         assertThrows(AggregateStreamCreationException.class, () -> {
             testSubject.appendEvents(createEvent(0));
             testSubject.appendEvents(createEvent(0));
@@ -152,7 +152,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
     @Override
-    public void testCreateTokenAtExactTime() {
+    public void createTokenAtExactTime() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:30.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.01Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:35.01Z"));
@@ -169,7 +169,7 @@ class MongoEventStorageEngineTest_DocPerCommit extends AbstractMongoEventStorage
 
     @SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
     @Override
-    public void testCreateTokenWithUnorderedEvents() {
+    public void createTokenWithUnorderedEvents() {
         DomainEventMessage<String> event1 = createEvent(0, Instant.parse("2007-12-03T10:15:46.00Z"));
         DomainEventMessage<String> event2 = createEvent(1, Instant.parse("2007-12-03T10:15:40.00Z"));
         DomainEventMessage<String> event3 = createEvent(2, Instant.parse("2007-12-03T10:15:50.00Z"));
