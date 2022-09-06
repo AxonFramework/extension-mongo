@@ -47,7 +47,7 @@ import static org.axonframework.eventsourcing.utils.EventStoreTestUtils.createEv
 class MongoEventStorageEngineTest_DBObjectSerialization extends AbstractMongoEventStorageEngineTest {
 
     @Container
-    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo:5");
 
     private MongoTemplate mongoTemplate;
     @SuppressWarnings("FieldCanBeLocal")

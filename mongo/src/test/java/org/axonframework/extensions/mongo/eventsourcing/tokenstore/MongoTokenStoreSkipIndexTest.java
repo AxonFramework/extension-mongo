@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoTokenStoreSkipIndexTest {
 
     @Container
-    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo:5");
 
     private MongoCollection<Document> trackingTokensCollection;
     private final TemporalAmount claimTimeout = Duration.ofSeconds(5);

@@ -73,7 +73,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoTokenStoreTest {
 
     @Container
-    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo:5");
 
     private MongoTokenStore tokenStore;
     private MongoTokenStore tokenStoreDifferentOwner;

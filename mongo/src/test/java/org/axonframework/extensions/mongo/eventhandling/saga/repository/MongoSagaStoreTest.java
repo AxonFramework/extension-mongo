@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MongoSagaStoreTest {
 
     @Container
-    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo");
+    private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo:5");
 
     private MongoTemplate mongoTemplate;
     private MongoSagaStore testSubject;
