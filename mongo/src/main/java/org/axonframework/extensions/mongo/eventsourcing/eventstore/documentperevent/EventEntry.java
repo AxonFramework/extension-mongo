@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.axonframework.serialization.SimpleSerializedObject;
 import org.bson.Document;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import static org.axonframework.common.DateTimeUtils.formatInstant;
 
@@ -156,5 +157,61 @@ public class EventEntry implements DomainEventData<Object> {
             representationType = Document.class;
         }
         return representationType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        EventEntry that = (EventEntry) o;
+
+        if (!Objects.equals(getEventIdentifier(), that.getEventIdentifier())) {
+            return false;
+        }
+        if (!Objects.equals(getTimestamp(), that.getTimestamp())) {
+            return false;
+        }
+        if (!Objects.equals(getPayload(), that.getPayload())) {
+            return false;
+        }
+        if (!Objects.equals(getMetaData(), that.getMetaData())) {
+            return false;
+        }
+        if (!Objects.equals(getType(), that.getType())) {
+            return false;
+        }
+        if (!Objects.equals(getAggregateIdentifier(), that.getAggregateIdentifier())) {
+            return false;
+        }
+        return Objects.equals(getSequenceNumber(), that.getSequenceNumber());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getEventIdentifier(),
+                            getTimestamp(),
+                            getPayload(),
+                            getMetaData(),
+                            getType(),
+                            getAggregateIdentifier(),
+                            getSequenceNumber());
+    }
+
+    @Override
+    public String toString() {
+        return "EventEntry{" +
+                ", eventIdentifier='" + getEventIdentifier() + '\'' +
+                ", timeStamp='" + getTimestamp() + '\'' +
+                ", payload='" + getPayload() + '\'' +
+                ", metaData=" + getMetaData() +
+                ", type='" + getType() + '\'' +
+                ", aggregateIdentifier='" + getAggregateIdentifier() + '\'' +
+                ", sequenceNumber=" + getSequenceNumber() +
+                '}';
     }
 }

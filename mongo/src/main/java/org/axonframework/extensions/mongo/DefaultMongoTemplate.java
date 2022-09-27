@@ -27,7 +27,12 @@ import java.util.Objects;
 import static org.axonframework.common.BuilderUtils.assertThat;
 
 /**
- * MongoTemplate instance giving direct access to the TrackingToken collection via a given MongoClient instance.
+ * MongoTemplate instance giving direct access to several collection via a given MongoClient instance. Will use the
+ * default nane for the collection, when none is set for the specific collections.
+ * </p>
+ * The defaults are {@code domainevents} for the domain events, {@code snapshotevents} for the snapshots events,
+ * {@code trackingtokens} for the tracking tokens, {@code sagas} for the sagas and {@code deadletters} for the dead
+ * letter.
  *
  * @author Allard Buijze
  * @since 3.0
@@ -38,12 +43,13 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
     private final String snapshotEventsCollectionName;
     private final String trackingTokensCollectionName;
     private final String sagasCollectionName;
+    private final String deadLetterCollectionName;
 
     /**
      * Instantiate a {@link DefaultMongoTemplate} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an {@link
-     * AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link MongoDatabase} is not {@code null}, and will throw an
+     * {@link AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link DefaultMongoTemplate} instance
      */
@@ -53,14 +59,15 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         this.snapshotEventsCollectionName = builder.snapshotEventsCollectionName;
         this.sagasCollectionName = builder.sagasCollectionName;
         this.trackingTokensCollectionName = builder.trackingTokensCollectionName;
+        this.deadLetterCollectionName = builder.deadLetterCollectionName;
     }
 
     /**
      * Instantiate a Builder to be able to create a {@link DefaultMongoTemplate}.
      * <p>
-     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName}, {@code
-     * trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to {@code
-     * trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
+     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName},
+     * {@code trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to
+     * {@code trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
      * <p>
      * The {@link MongoDatabase} is a <b>hard requirement</b> and as such should be provided. Can either be provided
      * directly, or by setting a {@link MongoClient}. When choosing the latter approach, the MongoDatabase name can be
@@ -73,42 +80,87 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         return new Builder();
     }
 
+    /**
+     * Overwrites the {@code snapshotEventsCollectionName} to use as the collection name for Snapshot Events.
+     *
+     * @param snapshotEventsCollectionName a {@link String} specifying the collection name for Snapshot Events
+     * @return a new {@link DefaultMongoTemplate} with the given {@code snapshotEventsCollectionName} set.
+     */
     public DefaultMongoTemplate withSnapshotCollection(String snapshotEventsCollectionName) {
         return DefaultMongoTemplate.builder()
                                    .mongoDatabase(database())
                                    .domainEventsCollectionName(domainEventsCollectionName)
                                    .snapshotEventsCollectionName(snapshotEventsCollectionName)
                                    .sagasCollectionName(sagasCollectionName)
+                                   .deadLetterCollectionName(deadLetterCollectionName)
                                    .trackingTokensCollectionName(trackingTokensCollectionName)
                                    .build();
     }
 
+    /**
+     * Overwrites the {@code domainEventsCollectionName} to use as the collection name for Domain Events.
+     *
+     * @param domainEventsCollectionName a {@link String} specifying the collection name for Domain Events
+     * @return a new {@link DefaultMongoTemplate} with the given {@code domainEventsCollectionName} set.
+     */
     public DefaultMongoTemplate withDomainEventsCollection(String domainEventsCollectionName) {
         return DefaultMongoTemplate.builder()
                                    .mongoDatabase(database())
                                    .domainEventsCollectionName(domainEventsCollectionName)
                                    .snapshotEventsCollectionName(snapshotEventsCollectionName)
                                    .sagasCollectionName(sagasCollectionName)
+                                   .deadLetterCollectionName(deadLetterCollectionName)
                                    .trackingTokensCollectionName(trackingTokensCollectionName)
                                    .build();
     }
 
+    /**
+     * Overwrites the {@code sagasCollectionName} to use as the collection name for Sagas.
+     *
+     * @param sagasCollectionName a {@link String} specifying the collection name for Sagas
+     * @return a new {@link DefaultMongoTemplate} with the given {@code sagasCollectionName} set.
+     */
     public DefaultMongoTemplate withSagasCollection(String sagasCollectionName) {
         return DefaultMongoTemplate.builder()
                                    .mongoDatabase(database())
                                    .domainEventsCollectionName(domainEventsCollectionName)
                                    .snapshotEventsCollectionName(snapshotEventsCollectionName)
                                    .sagasCollectionName(sagasCollectionName)
+                                   .deadLetterCollectionName(deadLetterCollectionName)
                                    .trackingTokensCollectionName(trackingTokensCollectionName)
                                    .build();
     }
 
+    /**
+     * Overwrites the {@code deadLetterCollectionName} to use as the collection name for dead letters.
+     *
+     * @param deadLetterCollectionName a {@link String} specifying the collection name for dead letters
+     * @return a new {@link DefaultMongoTemplate} with the given {@code deadLetterCollectionName} set.
+     */
+    public DefaultMongoTemplate withDeadLetterCollection(String deadLetterCollectionName) {
+        return DefaultMongoTemplate.builder()
+                                   .mongoDatabase(database())
+                                   .domainEventsCollectionName(domainEventsCollectionName)
+                                   .snapshotEventsCollectionName(snapshotEventsCollectionName)
+                                   .sagasCollectionName(sagasCollectionName)
+                                   .deadLetterCollectionName(deadLetterCollectionName)
+                                   .trackingTokensCollectionName(trackingTokensCollectionName)
+                                   .build();
+    }
+
+    /**
+     * Overwrites the {@code trackingTokensCollectionName} to use as the collection name for tracking tokens.
+     *
+     * @param trackingTokensCollectionName a {@link String} specifying the collection name for tracking tokens
+     * @return a new {@link DefaultMongoTemplate} with the given {@code trackingTokensCollectionName} set.
+     */
     public DefaultMongoTemplate withTrackingTokenCollection(String trackingTokensCollectionName) {
         return DefaultMongoTemplate.builder()
                                    .mongoDatabase(database())
                                    .domainEventsCollectionName(domainEventsCollectionName)
                                    .snapshotEventsCollectionName(snapshotEventsCollectionName)
                                    .sagasCollectionName(sagasCollectionName)
+                                   .deadLetterCollectionName(deadLetterCollectionName)
                                    .trackingTokensCollectionName(trackingTokensCollectionName)
                                    .build();
     }
@@ -133,12 +185,18 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         return database().getCollection(sagasCollectionName);
     }
 
+    @Override
+    public MongoCollection<Document> deadLetterCollection() {
+        return database().getCollection(deadLetterCollectionName);
+    }
+
     /**
      * Builder class to instantiate a {@link DefaultMongoTemplate}.
      * <p>
-     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName}, {@code
-     * trackingTokensCollectionName} and (@code sagasCollectionName} are respectively defaulted to {@code
-     * trackingtokens}, {@code domainevents}, {@code snapshotevents} and {@code sagas}.
+     * The {@code domainEventsCollectionName}, {@code snapshotEventsCollectionName},
+     * {@code trackingTokensCollectionName}, {@code sagasCollectionName} and (@code deadLetterCollectionName} are
+     * respectively defaulted to {@code trackingtokens}, {@code domainevents}, {@code snapshotevents}, {@code sagas} and
+     * {@code deadletters}.
      * <p>
      * The {@link MongoDatabase} is a <b>hard requirement</b> and as such should be provided. Can either be provided
      * directly, or by setting a {@link MongoClient}. When choosing the latter approach, the MongoDatabase name can be
@@ -151,6 +209,7 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         private String snapshotEventsCollectionName = "snapshotevents";
         private String trackingTokensCollectionName = "trackingtokens";
         private String sagasCollectionName = "sagas";
+        private String deadLetterCollectionName = "deadletters";
 
         @Override
         public Builder mongoDatabase(MongoClient mongoClient) {
@@ -210,8 +269,8 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         }
 
         /**
-         * Sets the {@code sagasCollectionName} to use as the collection name for Saga instances. Defaults to a {@code
-         * "sagas"} {@link String}.
+         * Sets the {@code sagasCollectionName} to use as the collection name for Saga instances. Defaults to a
+         * {@code "sagas"} {@link String}.
          *
          * @param sagasCollectionName a {@link String} specifying the collection name for Sagas
          * @return the current Builder instance, for fluent interfacing
@@ -219,6 +278,19 @@ public class DefaultMongoTemplate extends AbstractMongoTemplate implements Mongo
         public Builder sagasCollectionName(String sagasCollectionName) {
             assertName(sagasCollectionName, "sagasCollectionName");
             this.sagasCollectionName = sagasCollectionName;
+            return this;
+        }
+
+        /**
+         * Sets the {@code deadLetterCollectionName} to use as the collection name for Dead letters. Defaults to a
+         * {@code "deadletters"} {@link String}.
+         *
+         * @param deadLetterCollectionName a {@link String} specifying the collection name for Dead letters
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder deadLetterCollectionName(String deadLetterCollectionName) {
+            assertName(deadLetterCollectionName, "deadLetterCollectionName");
+            this.deadLetterCollectionName = deadLetterCollectionName;
             return this;
         }
 

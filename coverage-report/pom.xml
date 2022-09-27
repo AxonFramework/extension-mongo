@@ -26,7 +26,7 @@
     </parent>
 
     <artifactId>axon-mongo-coverage-report</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
 
     <name>Axon Framework Mongo Extension - Coverage Report Generator</name>
     <description>Coverage Report Generator for the Axon Mongo Extension</description>
