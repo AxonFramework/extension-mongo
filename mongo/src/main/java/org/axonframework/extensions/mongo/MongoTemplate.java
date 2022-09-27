@@ -52,4 +52,11 @@ public interface MongoTemplate {
      */
     MongoCollection<Document> sagaCollection();
 
+    /**
+     * Returns a reference to the collection containing the dead letter instances.
+     *
+     * @return MongoCollection containing the dead letters
+     */
+    MongoCollection<Document> deadLetterCollection();
+
 }

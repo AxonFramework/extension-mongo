@@ -38,7 +38,7 @@ jobs:
       - name: Build with Coverage reports
         if: matrix.sonar-enabled
         run: |
-          ./mvnw -B -U -Dstyle.color=always -Possrh -Dcoverage clean verify
+          ./mvnw -B -U -Dstyle.color=always -Possrh,coverage clean verify
 
       - name: Build coverage report
         if: matrix.sonar-enabled

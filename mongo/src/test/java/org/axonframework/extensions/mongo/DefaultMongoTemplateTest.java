@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,18 @@ class DefaultMongoTemplateTest {
 
         verify(mockMongo).getDatabase("customDatabaseName");
         testSubject.trackingTokensCollection();
+        verify(mockDb).getCollection("customCollectionName");
+    }
+
+    @Test
+    void ifDeadLetterCollectionIsSetThenItShouldBeUsedInsteadOfTheDefault() {
+        testSubject = DefaultMongoTemplate.builder()
+                                          .mongoDatabase(mockMongo, "customDatabaseName")
+                                          .build()
+                                          .withDeadLetterCollection("customCollectionName");
+
+        verify(mockMongo).getDatabase("customDatabaseName");
+        testSubject.deadLetterCollection();
         verify(mockDb).getCollection("customCollectionName");
     }
 
