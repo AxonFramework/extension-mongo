@@ -20,6 +20,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCursor;
 import com.thoughtworks.xstream.XStream;
 import org.axonframework.common.AxonConfigurationException;
+import org.axonframework.common.transaction.NoTransactionManager;
+import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.modelling.saga.AssociationValue;
 import org.axonframework.modelling.saga.AssociationValues;
@@ -53,12 +55,13 @@ public class MongoSagaStore implements SagaStore<Object> {
 
     private final MongoTemplate mongoTemplate;
     private final Serializer serializer;
+    private final TransactionManager transactionManager;
 
     /**
      * Instantiate a {@link MongoSagaStore} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoTemplate} is not {@code null}, and will throw an {@link
-     * AxonConfigurationException} if it is {@code null}.
+     * Will assert that the {@link MongoTemplate} is not {@code null}, and will throw an
+     * {@link AxonConfigurationException} if it is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link MongoSagaStore} instance
      */
@@ -66,13 +69,15 @@ public class MongoSagaStore implements SagaStore<Object> {
         builder.validate();
         this.mongoTemplate = builder.mongoTemplate;
         this.serializer = builder.serializer.get();
+        this.transactionManager = builder.transactionManager;
     }
 
     /**
      * Instantiate a Builder to be able to create a {@link MongoSagaStore}.
      * <p>
      * The {@link Serializer} is defaulted to a {@link XStreamSerializer}. The {@link MongoTemplate} is a
-     * <b>hard requirement</b> and as such should be provided.
+     * <b>hard requirement</b> and as such should be provided. The {@link TransactionManager} is defaulted to a
+     * {@link NoTransactionManager}.
      *
      * @return a Builder to be able to create a {@link MongoSagaStore}
      */
@@ -82,7 +87,9 @@ public class MongoSagaStore implements SagaStore<Object> {
 
     @Override
     public <S> Entry<S> loadSaga(Class<S> sagaType, String sagaIdentifier) {
-        Document dbSaga = mongoTemplate.sagaCollection().find(SagaEntry.queryByIdentifier(sagaIdentifier)).first();
+        Document dbSaga = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.sagaCollection().find(SagaEntry.queryByIdentifier(sagaIdentifier)).first()
+        );
         if (dbSaga == null) {
             return null;
         }
@@ -104,14 +111,15 @@ public class MongoSagaStore implements SagaStore<Object> {
     @Override
     public Set<String> findSagas(Class<?> sagaType, AssociationValue associationValue) {
         final BasicDBObject value = associationValueQuery(sagaType, associationValue);
-
-        MongoCursor<Document> dbCursor = mongoTemplate.sagaCollection()
-                                                      .find(value)
-                                                      .projection(include("sagaIdentifier"))
-                                                      .iterator();
         Set<String> found = new TreeSet<>();
-        while (dbCursor.hasNext()) {
-            found.add((String) dbCursor.next().get("sagaIdentifier"));
+        try (MongoCursor<Document> dbCursor = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.sagaCollection()
+                                   .find(value)
+                                   .projection(include("sagaIdentifier"))
+                                   .iterator())) {
+            while (dbCursor.hasNext()) {
+                found.add((String) dbCursor.next().get("sagaIdentifier"));
+            }
         }
         return found;
     }
@@ -130,15 +138,19 @@ public class MongoSagaStore implements SagaStore<Object> {
 
     @Override
     public void deleteSaga(Class<?> sagaType, String sagaIdentifier, Set<AssociationValue> associationValues) {
-        mongoTemplate.sagaCollection().findOneAndDelete(SagaEntry.queryByIdentifier(sagaIdentifier));
+        transactionManager.executeInTransaction(
+                () -> mongoTemplate.sagaCollection().findOneAndDelete(SagaEntry.queryByIdentifier(sagaIdentifier))
+        );
     }
 
     @Override
     public void updateSaga(Class<?> sagaType, String sagaIdentifier, Object saga, AssociationValues associationValues) {
         SagaEntry<?> sagaEntry = new SagaEntry<>(sagaIdentifier, saga, associationValues.asSet(), serializer);
-        mongoTemplate.sagaCollection().updateOne(
-                SagaEntry.queryByIdentifier(sagaIdentifier),
-                new Document("$set", sagaEntry.asDocument()));
+        transactionManager.executeInTransaction(
+                () -> mongoTemplate.sagaCollection().updateOne(
+                        SagaEntry.queryByIdentifier(sagaIdentifier),
+                        new Document("$set", sagaEntry.asDocument()))
+        );
     }
 
     @Override
@@ -148,7 +160,9 @@ public class MongoSagaStore implements SagaStore<Object> {
                            Set<AssociationValue> associationValues) {
         SagaEntry<?> sagaEntry = new SagaEntry<>(sagaIdentifier, saga, associationValues, serializer);
         Document sagaObject = sagaEntry.asDocument();
-        mongoTemplate.sagaCollection().insertOne(sagaObject);
+        transactionManager.executeInTransaction(
+                () -> mongoTemplate.sagaCollection().insertOne(sagaObject)
+        );
     }
 
     private String getSagaTypeName(Class<?> sagaType) {
@@ -159,12 +173,14 @@ public class MongoSagaStore implements SagaStore<Object> {
      * Builder class to instantiate a {@link MongoSagaStore}.
      * <p>
      * The {@link Serializer} is defaulted to a {@link XStreamSerializer}. The {@link MongoTemplate} is a
-     * <b>hard requirement</b> and as such should be provided.
+     * <b>hard requirement</b> and as such should be provided. The {@link TransactionManager} is defaulted to a
+     * {@link NoTransactionManager}.
      */
     public static class Builder {
 
         private MongoTemplate mongoTemplate;
         private Supplier<Serializer> serializer;
+        private TransactionManager transactionManager = NoTransactionManager.instance();
 
         /**
          * Sets the {@link MongoTemplate} providing access to the collections.
@@ -187,6 +203,19 @@ public class MongoSagaStore implements SagaStore<Object> {
         public Builder serializer(Serializer serializer) {
             assertNonNull(serializer, "Serializer may not be null");
             this.serializer = () -> serializer;
+            return this;
+        }
+
+        /**
+         * Sets the {@link TransactionManager} used to manage transaction around fetching tokens. Will default to
+         * {@link NoTransactionManager}, which effectively will not use transactions.
+         *
+         * @param transactionManager a {@link TransactionManager} used to manage transaction around fetching event data
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder transactionManager(TransactionManager transactionManager) {
+            assertNonNull(transactionManager, "TransactionManager may not be null");
+            this.transactionManager = transactionManager;
             return this;
         }
 

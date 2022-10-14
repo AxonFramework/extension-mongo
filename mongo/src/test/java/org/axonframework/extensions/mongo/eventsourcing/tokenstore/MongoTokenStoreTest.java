@@ -20,6 +20,7 @@ import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.thoughtworks.xstream.XStream;
+import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.eventhandling.GlobalSequenceTrackingToken;
 import org.axonframework.eventhandling.Segment;
 import org.axonframework.eventhandling.TrackingToken;
@@ -528,6 +529,12 @@ class MongoTokenStoreTest {
                     tokenStoreDifferentOwner.initializeSegment(initialToken, testProcessorName, testSegment);
                     return true;
                 });
+    }
+
+    @Test
+    void settingNullTransactionManagerShouldThrow() {
+        MongoTokenStore.Builder builder = MongoTokenStore.builder();
+        assertThrows(AxonConfigurationException.class, () -> builder.transactionManager(null));
     }
 
     private <T> T testConcurrency(Supplier<T> s1, Supplier<T> s2) throws InterruptedException {

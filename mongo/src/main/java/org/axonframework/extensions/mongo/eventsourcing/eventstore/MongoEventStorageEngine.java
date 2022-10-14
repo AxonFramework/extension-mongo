@@ -20,6 +20,8 @@ import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoBulkWriteException;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.jdbc.PersistenceExceptionResolver;
+import org.axonframework.common.transaction.NoTransactionManager;
+import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
 import org.axonframework.eventhandling.EventMessage;
@@ -52,12 +54,13 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
 
     private final MongoTemplate template;
     private final StorageStrategy storageStrategy;
+    private final TransactionManager transactionManager;
 
     /**
      * Instantiate a {@link MongoEventStorageEngine} based on the fields contained in the {@link Builder}.
      * <p>
      * Will assert that the {@link MongoTemplate} is not {@code null}, and will throw an
-     * {@link AxonConfigurationException} if any of them is {@code null}.
+     * {@link AxonConfigurationException} if it is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link MongoEventStorageEngine} instance
      */
@@ -65,6 +68,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
         super(builder);
         this.template = builder.template;
         this.storageStrategy = builder.storageStrategy;
+        this.transactionManager = builder.transactionManager;
         ensureIndexes();
     }
 
@@ -80,6 +84,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
      * <li>The {@code snapshotFilter} defaults to a {@link Predicate} which returns {@code true} regardless.</li>
      * <li>The {@code batchSize} defaults to an integer of size {@code 100}.</li>
      * <li>The {@link StorageStrategy} defaults to a {@link DocumentPerEventStorageStrategy}.</li>
+     * <li>The {@link TransactionManager} defaults to a {@link NoTransactionManager}.</li>
      * </ul>
      * <p>
      * The {@link MongoTemplate} is a <b>hard requirement</b> and as such should be provided.
@@ -98,20 +103,24 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
     /**
      * Make sure an index is created on the collection that stores domain events.
      *
-     * @deprecated  This method is now called by the constructor instead of the dependency injection framework running
-     *              the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency
-     *              injection framework.
+     * @deprecated This method is now called by the constructor instead of the dependency injection framework running
+     * the @PostConstruct. i.e. You no longer have to call it manually if you don't use a dependency injection
+     * framework.
      */
     @Deprecated
     public void ensureIndexes() {
-        storageStrategy.ensureIndexes(template.eventCollection(), template.snapshotCollection());
+        transactionManager.executeInTransaction(
+                () -> storageStrategy.ensureIndexes(template.eventCollection(), template.snapshotCollection())
+        );
     }
 
     @Override
     protected void appendEvents(List<? extends EventMessage<?>> events, Serializer serializer) {
         if (!events.isEmpty()) {
             try {
-                storageStrategy.appendEvents(template.eventCollection(), events, serializer);
+                transactionManager.executeInTransaction(
+                        () -> storageStrategy.appendEvents(template.eventCollection(), events, serializer)
+                );
             } catch (Exception e) {
                 handlePersistenceException(e, events.get(0));
             }
@@ -121,9 +130,18 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
     @Override
     protected void storeSnapshot(DomainEventMessage<?> snapshot, Serializer serializer) {
         try {
-            storageStrategy.appendSnapshot(template.snapshotCollection(), snapshot, serializer);
-            storageStrategy.deleteSnapshots(
-                    template.snapshotCollection(), snapshot.getAggregateIdentifier(), snapshot.getSequenceNumber()
+            transactionManager.executeInTransaction(
+                    () -> {
+                        storageStrategy.appendSnapshot(
+                                template.snapshotCollection(),
+                                snapshot,
+                                serializer);
+                        storageStrategy.deleteSnapshots(
+                                template.snapshotCollection(),
+                                snapshot.getAggregateIdentifier(),
+                                snapshot.getSequenceNumber()
+                        );
+                    }
             );
         } catch (Exception e) {
             handlePersistenceException(e, snapshot);
@@ -132,29 +150,42 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
 
     @Override
     protected Stream<? extends DomainEventData<?>> readSnapshotData(String aggregateIdentifier) {
-        return storageStrategy.findSnapshots(template.snapshotCollection(), aggregateIdentifier);
+        return transactionManager.fetchInTransaction(
+                () -> storageStrategy.findSnapshots(template.snapshotCollection(), aggregateIdentifier)
+        );
     }
 
     @Override
     protected List<? extends DomainEventData<?>> fetchDomainEvents(String aggregateIdentifier, long firstSequenceNumber,
                                                                    int batchSize) {
-        return storageStrategy
-                .findDomainEvents(template.eventCollection(), aggregateIdentifier, firstSequenceNumber, batchSize);
+        return transactionManager.fetchInTransaction(
+                () -> storageStrategy
+                        .findDomainEvents(template.eventCollection(),
+                                          aggregateIdentifier,
+                                          firstSequenceNumber,
+                                          batchSize)
+        );
     }
 
     @Override
     protected List<? extends TrackedEventData<?>> fetchTrackedEvents(TrackingToken lastToken, int batchSize) {
-        return storageStrategy.findTrackedEvents(template.eventCollection(), lastToken, batchSize);
+        return transactionManager.fetchInTransaction(
+                () -> storageStrategy.findTrackedEvents(template.eventCollection(), lastToken, batchSize)
+        );
     }
 
     @Override
     public Optional<Long> lastSequenceNumberFor(@Nonnull String aggregateIdentifier) {
-        return storageStrategy.lastSequenceNumberFor(template.eventCollection(), aggregateIdentifier);
+        return transactionManager.fetchInTransaction(
+                () -> storageStrategy.lastSequenceNumberFor(template.eventCollection(), aggregateIdentifier)
+        );
     }
 
     @Override
     public TrackingToken createTailToken() {
-        return storageStrategy.createTailToken(template.eventCollection());
+        return transactionManager.fetchInTransaction(
+                () -> storageStrategy.createTailToken(template.eventCollection())
+        );
     }
 
     @Override
@@ -179,6 +210,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
      * <li>The {@code snapshotFilter} defaults to a {@link Predicate} which returns {@code true} regardless.</li>
      * <li>The {@code batchSize} defaults to an integer of size {@code 100}.</li>
      * <li>The {@link StorageStrategy} defaults to a {@link DocumentPerEventStorageStrategy}.</li>
+     * <li>The {@link TransactionManager} defaults to a {@link NoTransactionManager}.</li>
      * </ul>
      * <p>
      * The {@link MongoTemplate} is a <b>hard requirement</b> and as such should be provided.
@@ -187,6 +219,7 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
 
         private MongoTemplate template;
         private StorageStrategy storageStrategy = new DocumentPerEventStorageStrategy();
+        private TransactionManager transactionManager = NoTransactionManager.instance();
 
         private Builder() {
             persistenceExceptionResolver(MongoEventStorageEngine::isDuplicateKeyException);
@@ -264,6 +297,19 @@ public class MongoEventStorageEngine extends BatchingEventStorageEngine {
         public Builder storageStrategy(StorageStrategy storageStrategy) {
             assertNonNull(storageStrategy, "StorageStrategy may not be null");
             this.storageStrategy = storageStrategy;
+            return this;
+        }
+
+        /**
+         * Sets the {@link TransactionManager} used to manage transaction around fetching tokens. Will default to
+         * {@link NoTransactionManager}, which effectively will not use transactions.
+         *
+         * @param transactionManager a {@link TransactionManager} used to manage transaction around fetching event data
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder transactionManager(TransactionManager transactionManager) {
+            assertNonNull(transactionManager, "TransactionManager may not be null");
+            this.transactionManager = transactionManager;
             return this;
         }
 
