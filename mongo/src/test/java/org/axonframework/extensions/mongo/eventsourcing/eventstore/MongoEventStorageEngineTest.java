@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore;
 
 import com.mongodb.BasicDBObject;
+import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.eventhandling.DomainEventMessage;
 import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.TrackingToken;
@@ -111,6 +112,12 @@ class MongoEventStorageEngineTest extends AbstractMongoEventStorageEngineTest {
         List<EventMessage<?>> readEvents = testSubject.readEvents(result, false).collect(toList());
 
         assertEventStreamsById(Arrays.asList(event1, event3, event2), readEvents);
+    }
+
+    @Test
+    void settingNullTransactionManagerShouldThrow() {
+        MongoEventStorageEngine.Builder builder = MongoEventStorageEngine.builder();
+        assertThrows(AxonConfigurationException.class, () -> builder.transactionManager(null));
     }
 
     @Override

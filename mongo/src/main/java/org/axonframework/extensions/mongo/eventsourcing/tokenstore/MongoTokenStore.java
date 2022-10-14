@@ -27,6 +27,8 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.BuilderUtils;
+import org.axonframework.common.transaction.NoTransactionManager;
+import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.eventhandling.Segment;
 import org.axonframework.eventhandling.TrackingToken;
 import org.axonframework.eventhandling.tokenstore.AbstractTokenEntry;
@@ -94,12 +96,13 @@ public class MongoTokenStore implements TokenStore {
     private final TemporalAmount claimTimeout;
     private final String nodeId;
     private final Class<?> contentType;
+    private final TransactionManager transactionManager;
 
     /**
      * Instantiate a {@link MongoTokenStore} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link MongoTemplate} and {@link Serializer} are not {@code null}, and will throw an {@link
-     * AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link MongoTemplate} and {@link Serializer} are not {@code null}, and will throw an
+     * {@link AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link MongoTokenStore} instance
      */
@@ -110,6 +113,7 @@ public class MongoTokenStore implements TokenStore {
         this.claimTimeout = builder.claimTimeout;
         this.nodeId = builder.nodeId;
         this.contentType = builder.contentType;
+        this.transactionManager = builder.transactionManager;
         if (builder.ensureIndexes) {
             ensureIndexes();
         }
@@ -118,9 +122,10 @@ public class MongoTokenStore implements TokenStore {
     /**
      * Instantiate a Builder to be able to create a {@link MongoTokenStore}.
      * <p>
-     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
-     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output and the {@code contentType}
-     * to a {@code byte[]} {@link Class}. The {@link MongoTemplate} and {@link Serializer} are
+     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)},
+     * {@code nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output and the
+     * {@code contentType} to a {@code byte[]} {@link Class}. The {@link TransactionManager} is defaulted to a
+     * {@link NoTransactionManager}. The {@link MongoTemplate} and {@link Serializer} are
      * <b>hard requirements</b> and as such should be provided.
      *
      * @return a Builder to be able to create a {@link MongoTokenStore}
@@ -148,8 +153,9 @@ public class MongoTokenStore implements TokenStore {
                               set(TOKEN_PROPERTY_NAME, tokenEntry.getSerializedToken().getData()),
                               set(TOKEN_TYPE_PROPERTY_NAME, tokenEntry.getSerializedToken().getType().getName()));
 
-        UpdateResult updateResult = mongoTemplate.trackingTokensCollection()
-                                                 .updateOne(claimableTokenEntryFilter(processorName, segment), update);
+        UpdateResult updateResult = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .updateOne(claimableTokenEntryFilter(processorName, segment), update));
 
         if (updateResult.getModifiedCount() == 0) {
             throw new UnableToClaimTokenException(format(
@@ -187,8 +193,9 @@ public class MongoTokenStore implements TokenStore {
                                                                                        segment))
                                           .map(this::tokenEntryToDocument)
                                           .collect(Collectors.toList());
-        mongoTemplate.trackingTokensCollection()
-                     .insertMany(entries, new InsertManyOptions().ordered(false));
+        transactionManager.executeInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .insertMany(entries, new InsertManyOptions().ordered(false)));
     }
 
     /**
@@ -200,13 +207,14 @@ public class MongoTokenStore implements TokenStore {
     }
 
     private AbstractTokenEntry<?> loadToken(String processorName, int segment) {
-        Document document = mongoTemplate.trackingTokensCollection()
-                                         .findOneAndUpdate(
-                                                 claimableTokenEntryFilter(processorName, segment),
-                                                 combine(set(OWNER_PROPERTY_NAME, nodeId),
-                                                         set(TIMESTAMP_PROPERTY_NAME, clock.millis())),
-                                                 new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
-                                         );
+        Document document = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .findOneAndUpdate(
+                                           claimableTokenEntryFilter(processorName, segment),
+                                           combine(set(OWNER_PROPERTY_NAME, nodeId),
+                                                   set(TIMESTAMP_PROPERTY_NAME, clock.millis())),
+                                           new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+                                   ));
 
         if (document == null) {
             throw new UnableToClaimTokenException(
@@ -226,12 +234,12 @@ public class MongoTokenStore implements TokenStore {
 
     @Override
     public void extendClaim(@Nonnull String processorName, int segment) throws UnableToClaimTokenException {
-        UpdateResult updateResult =
-                mongoTemplate.trackingTokensCollection()
-                             .updateOne(and(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
-                                            eq(SEGMENT_PROPERTY_NAME, segment),
-                                            eq(OWNER_PROPERTY_NAME, nodeId)),
-                                        set(TIMESTAMP_PROPERTY_NAME, clock.instant().toEpochMilli()));
+        UpdateResult updateResult = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .updateOne(and(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
+                                                  eq(SEGMENT_PROPERTY_NAME, segment),
+                                                  eq(OWNER_PROPERTY_NAME, nodeId)),
+                                              set(TIMESTAMP_PROPERTY_NAME, clock.instant().toEpochMilli())));
         if (updateResult.getMatchedCount() == 0) {
             throw new UnableToClaimTokenException(format(
                     "Unable to extend claim on token token '%s[%s]'. It is owned by another segment.",
@@ -245,12 +253,14 @@ public class MongoTokenStore implements TokenStore {
      */
     @Override
     public void releaseClaim(@Nonnull String processorName, int segment) {
-        UpdateResult updateResult = mongoTemplate.trackingTokensCollection()
-                                                 .updateOne(and(
-                                                         eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
-                                                         eq(SEGMENT_PROPERTY_NAME, segment),
-                                                         eq(OWNER_PROPERTY_NAME, nodeId)
-                                                 ), set(OWNER_PROPERTY_NAME, null));
+        UpdateResult updateResult = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .updateOne(and(
+                                           eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
+                                           eq(SEGMENT_PROPERTY_NAME, segment),
+                                           eq(OWNER_PROPERTY_NAME, nodeId)
+                                   ), set(OWNER_PROPERTY_NAME, null))
+        );
         if (updateResult.getMatchedCount() == 0) {
             logger.warn("Releasing claim of token {}/{} failed. It was owned by another node.", processorName, segment);
         }
@@ -263,9 +273,9 @@ public class MongoTokenStore implements TokenStore {
         try {
             AbstractTokenEntry<?> tokenEntry =
                     new GenericTokenEntry<>(token, serializer, contentType, processorName, segment);
-
-            mongoTemplate.trackingTokensCollection()
-                         .insertOne(tokenEntryToDocument(tokenEntry));
+            transactionManager.executeInTransaction(
+                    () -> mongoTemplate.trackingTokensCollection()
+                                       .insertOne(tokenEntryToDocument(tokenEntry)));
         } catch (MongoWriteException exception) {
             if (ErrorCategory.fromErrorCode(exception.getError().getCode()) == ErrorCategory.DUPLICATE_KEY) {
                 throw new UnableToInitializeTokenException(
@@ -277,12 +287,13 @@ public class MongoTokenStore implements TokenStore {
 
     @Override
     public void deleteToken(@Nonnull String processorName, int segment) throws UnableToClaimTokenException {
-        DeleteResult deleteResult = mongoTemplate.trackingTokensCollection()
-                                                 .deleteOne(and(
-                                                         eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
-                                                         eq(SEGMENT_PROPERTY_NAME, segment),
-                                                         eq(OWNER_PROPERTY_NAME, nodeId)
-                                                 ));
+        DeleteResult deleteResult = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .deleteOne(and(
+                                           eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
+                                           eq(SEGMENT_PROPERTY_NAME, segment),
+                                           eq(OWNER_PROPERTY_NAME, nodeId)
+                                   )));
 
         if (deleteResult.getDeletedCount() == 0) {
             throw new UnableToClaimTokenException("Unable to remove token. It is not owned by " + nodeId);
@@ -296,12 +307,13 @@ public class MongoTokenStore implements TokenStore {
 
     @Override
     public int[] fetchSegments(@Nonnull String processorName) {
-        ArrayList<Integer> segments = mongoTemplate.trackingTokensCollection()
-                                                   .find(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName))
-                                                   .sort(ascending(SEGMENT_PROPERTY_NAME))
-                                                   .projection(fields(include(SEGMENT_PROPERTY_NAME), excludeId()))
-                                                   .map(d -> d.get(SEGMENT_PROPERTY_NAME, Integer.class))
-                                                   .into(new ArrayList<>());
+        ArrayList<Integer> segments = transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .find(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName))
+                                   .sort(ascending(SEGMENT_PROPERTY_NAME))
+                                   .projection(fields(include(SEGMENT_PROPERTY_NAME), excludeId()))
+                                   .map(d -> d.get(SEGMENT_PROPERTY_NAME, Integer.class))
+                                   .into(new ArrayList<>()));
         // toArray doesn't work because of autoboxing limitations
         int[] ints = new int[segments.size()];
         for (int i = 0; i < ints.length; i++) {
@@ -313,13 +325,14 @@ public class MongoTokenStore implements TokenStore {
     @Override
     public List<Segment> fetchAvailableSegments(@Nonnull String processorName) {
         int[] allSegments = fetchSegments(processorName);
-        return mongoTemplate.trackingTokensCollection()
-                            .find(availableTokenEntryFilter(processorName))
-                            .sort(ascending(SEGMENT_PROPERTY_NAME))
-                            .projection(fields(include(SEGMENT_PROPERTY_NAME), excludeId()))
-                            .map(d -> d.get(SEGMENT_PROPERTY_NAME, Integer.class))
-                            .map(s -> Segment.computeSegment(s, allSegments))
-                            .into(new ArrayList<>());
+        return transactionManager.fetchInTransaction(
+                () -> mongoTemplate.trackingTokensCollection()
+                                   .find(availableTokenEntryFilter(processorName))
+                                   .sort(ascending(SEGMENT_PROPERTY_NAME))
+                                   .projection(fields(include(SEGMENT_PROPERTY_NAME), excludeId()))
+                                   .map(d -> d.get(SEGMENT_PROPERTY_NAME, Integer.class))
+                                   .map(s -> Segment.computeSegment(s, allSegments))
+                                   .into(new ArrayList<>()));
     }
 
     @Override
@@ -333,26 +346,28 @@ public class MongoTokenStore implements TokenStore {
         }
     }
 
-    private ConfigToken getConfig() {
+    private AbstractTokenEntry<?> getConfigToken() {
         Document document = mongoTemplate.trackingTokensCollection()
                                          .find(and(
                                                  eq(PROCESSOR_NAME_PROPERTY_NAME, CONFIG_TOKEN_ID),
                                                  eq(SEGMENT_PROPERTY_NAME, CONFIG_SEGMENT)
                                          ))
                                          .first();
-        AbstractTokenEntry<?> token;
-
         if (Objects.isNull(document)) {
-            token = new GenericTokenEntry<>(
+            AbstractTokenEntry<?> token = new GenericTokenEntry<>(
                     new ConfigToken(Collections.singletonMap("id", UUID.randomUUID().toString())),
                     serializer, contentType, CONFIG_TOKEN_ID, CONFIG_SEGMENT
             );
             mongoTemplate.trackingTokensCollection()
                          .insertOne(tokenEntryToDocument(token));
+            return token;
         } else {
-            token = documentToTokenEntry(document);
+            return documentToTokenEntry(document);
         }
+    }
 
+    private ConfigToken getConfig() {
+        AbstractTokenEntry<?> token = transactionManager.fetchInTransaction(this::getConfigToken);
         return (ConfigToken) token.getToken(serializer);
     }
 
@@ -434,17 +449,21 @@ public class MongoTokenStore implements TokenStore {
      */
     @Deprecated
     public void ensureIndexes() {
-        mongoTemplate.trackingTokensCollection().createIndex(Indexes.ascending(PROCESSOR_NAME_PROPERTY_NAME,
-                                                                               SEGMENT_PROPERTY_NAME),
-                                                             new IndexOptions().unique(true));
+        transactionManager.executeInTransaction(
+                () -> mongoTemplate
+                        .trackingTokensCollection()
+                        .createIndex(Indexes.ascending(PROCESSOR_NAME_PROPERTY_NAME, SEGMENT_PROPERTY_NAME),
+                                     new IndexOptions().unique(true))
+        );
     }
 
     /**
      * Builder class to instantiate a {@link MongoTokenStore}.
      * <p>
-     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)}, {@code
-     * nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output, the {@code contentType} to
-     * a {@code byte[]} {@link Class}, and the {@code ensureIndexes} to {@code true}. The {@link MongoTemplate} and
+     * The {@code claimTimeout} is defaulted to a 10 seconds duration (by using {@link Duration#ofSeconds(long)},
+     * {@code nodeId} is defaulted to the {@code ManagementFactory#getRuntimeMXBean#getName} output, the
+     * {@code contentType} to a {@code byte[]} {@link Class}, and the {@code ensureIndexes} to {@code true}. The
+     * {@link TransactionManager} defaults to a {@link NoTransactionManager}. The {@link MongoTemplate} and
      * {@link Serializer} are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
@@ -455,12 +474,13 @@ public class MongoTokenStore implements TokenStore {
         private String nodeId = ManagementFactory.getRuntimeMXBean().getName();
         private Class<?> contentType = byte[].class;
         private boolean ensureIndexes = true;
+        private TransactionManager transactionManager = NoTransactionManager.instance();
 
         /**
          * Sets the {@link MongoTemplate} providing access to the collection which stores the {@link TrackingToken}s.
          *
-         * @param mongoTemplate the {@link MongoTemplate} providing access to the collection which stores the {@link
-         *                      TrackingToken}s
+         * @param mongoTemplate the {@link MongoTemplate} providing access to the collection which stores the
+         *                      {@link TrackingToken}s
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder mongoTemplate(MongoTemplate mongoTemplate) {
@@ -483,8 +503,8 @@ public class MongoTokenStore implements TokenStore {
 
         /**
          * Sets the {@code claimTimeout} specifying the amount of time this process will wait after which this process
-         * will force a claim of a {@link TrackingToken}. Thus if a claim has not been updated for the given {@code
-         * claimTimeout}, this process will 'steal' the claim. Defaults to a duration of 10 seconds.
+         * will force a claim of a {@link TrackingToken}. Thus if a claim has not been updated for the given
+         * {@code claimTimeout}, this process will 'steal' the claim. Defaults to a duration of 10 seconds.
          *
          * @param claimTimeout a timeout specifying the time after which this process will force a claim
          * @return the current Builder instance, for fluent interfacing
@@ -496,8 +516,8 @@ public class MongoTokenStore implements TokenStore {
         }
 
         /**
-         * Sets the {@code nodeId} to identify ownership of the tokens. Defaults to {@code
-         * ManagementFactory#getRuntimeMXBean#getName} output as the node id.
+         * Sets the {@code nodeId} to identify ownership of the tokens. Defaults to
+         * {@code ManagementFactory#getRuntimeMXBean#getName} output as the node id.
          *
          * @param nodeId the id as a {@link String} to identify ownership of the tokens
          * @return the current Builder instance, for fluent interfacing
@@ -509,8 +529,8 @@ public class MongoTokenStore implements TokenStore {
         }
 
         /**
-         * Sets the {@code contentType} to which a {@link TrackingToken} should be serialized. Defaults to a {@code
-         * byte[]} {@link Class} type.
+         * Sets the {@code contentType} to which a {@link TrackingToken} should be serialized. Defaults to a
+         * {@code byte[]} {@link Class} type.
          *
          * @param contentType the content type as a {@link Class} to which a {@link TrackingToken} should be serialized
          * @return the current Builder instance, for fluent interfacing
@@ -531,6 +551,19 @@ public class MongoTokenStore implements TokenStore {
          */
         public Builder ensureIndexes(boolean ensureIndexes) {
             this.ensureIndexes = ensureIndexes;
+            return this;
+        }
+
+        /**
+         * Sets the {@link TransactionManager} used to manage transaction around fetching tokens. Will default to
+         * {@link NoTransactionManager}, which effectively will not use transactions.
+         *
+         * @param transactionManager a {@link TransactionManager} used to manage transaction around fetching event data
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder transactionManager(TransactionManager transactionManager) {
+            assertNonNull(transactionManager, "TransactionManager may not be null");
+            this.transactionManager = transactionManager;
             return this;
         }
 

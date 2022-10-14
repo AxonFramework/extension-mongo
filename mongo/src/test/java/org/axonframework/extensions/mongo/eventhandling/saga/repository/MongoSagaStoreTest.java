@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.axonframework.extensions.mongo.eventhandling.saga.repository;
 
 import com.mongodb.client.FindIterable;
+import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.extensions.mongo.MongoTemplate;
 import org.axonframework.extensions.mongo.util.MongoTemplateFactory;
 import org.axonframework.extensions.mongo.utils.TestSerializer;
@@ -250,6 +251,12 @@ class MongoSagaStoreTest {
         testSubject.deleteSaga(MyTestSaga.class, identifier, singleton(associationValue));
 
         assertNull(mongoTemplate.sagaCollection().find(SagaEntry.queryByIdentifier(identifier)).first());
+    }
+
+    @Test
+    void shouldThrowWhenTransactionManagerNull() {
+        MongoSagaStore.Builder builder = MongoSagaStore.builder();
+        assertThrows(AxonConfigurationException.class, () -> builder.transactionManager(null));
     }
 
     private static class MyTestSaga {
