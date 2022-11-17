@@ -25,6 +25,7 @@
         <module>mongo-axon-example</module>
         <module>axon-mongo-spring</module>
         <module>axon-mongo-spring-boot-autoconfigure</module>
+        <module>axon-mongo-spring-boot-starter</module>
     </modules>
     <packaging>pom</packaging>
 
