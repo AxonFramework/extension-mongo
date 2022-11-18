@@ -24,6 +24,7 @@
         <module>mongo</module>
         <module>mongo-axon-example</module>
         <module>axon-mongo-spring</module>
+        <module>axon-mongo-spring-boot-autoconfigure</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -60,6 +61,7 @@
         <jackson.version>2.13.4</jackson.version>
 
         <spring.version>5.3.24</spring.version>
+        <spring.boot.version>2.7.5</spring.boot.version>
         <spring.data.mongodb.version>3.4.5</spring.data.mongodb.version>
         <commons-io.version>2.11.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
@@ -191,6 +193,31 @@
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-mongodb</artifactId>
                 <version>${spring.data.mongodb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure-processor</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring.boot.version}</version>
             </dependency>
             <!-- Mockito -->
             <dependency>
