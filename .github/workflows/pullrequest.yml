@@ -14,7 +14,9 @@ jobs:
             sonar-enabled: false
           - java-version: 11
             sonar-enabled: true
-      fail-fast: false # run both to the end
+          - java-version: 17
+            sonar-enabled: falls
+      fail-fast: false # run all to the end
 
     steps:
       - name: Checkout code
