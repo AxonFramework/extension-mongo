@@ -62,7 +62,7 @@
         <jackson.version>2.13.4</jackson.version>
 
         <spring.version>5.3.24</spring.version>
-        <spring.boot.version>2.7.5</spring.boot.version>
+        <spring.boot.version>3.0.0</spring.boot.version>
         <spring.data.mongodb.version>3.4.6</spring.data.mongodb.version>
         <commons-io.version>2.11.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
