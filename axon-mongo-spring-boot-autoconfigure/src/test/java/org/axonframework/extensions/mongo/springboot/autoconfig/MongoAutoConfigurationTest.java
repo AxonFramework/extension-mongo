@@ -96,8 +96,6 @@ class MongoAutoConfigurationTest {
                 .withPropertyValues("axon.mongo.database-name=testdb")
                 .withPropertyValues("axon.mongo.token-store.enabled=false")
                 .withPropertyValues("axon.mongo.event-store.enabled=true")
-                .withPropertyValues(
-                        "axon.mongo.event-store.storage-strategy=org.axonframework.extensions.mongo.eventsourcing.eventstore.documentpercommit.DocumentPerCommitStorageStrategy")
                 .withPropertyValues("axon.mongo.saga-store.enabled=false")
                 .run(context -> {
                     assertEquals(1, context.getBeansOfType(TransactionManager.class).size());
