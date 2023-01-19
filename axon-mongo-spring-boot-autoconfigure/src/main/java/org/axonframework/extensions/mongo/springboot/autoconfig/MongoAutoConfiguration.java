@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022. Axon Framework
+ * Copyright (c) 2010-2023. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,12 @@ import org.axonframework.extensions.mongo.springboot.AxonMongoProperties;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 
@@ -61,7 +61,7 @@ import static java.util.Objects.isNull;
  * @author Gerard Klijs
  * @since 4.7.0
  */
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(AxonMongoProperties.class)
 @AutoConfigureAfter(name = {
         "org.axonframework.springboot.autoconfig.TransactionAutoConfiguration",

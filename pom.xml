@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2010-2022. Axon Framework
+  ~ Copyright (c) 2010-2023. Axon Framework
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.6.2</axon.version>
+        <axon.version>4.7.0-SNAPSHOT</axon.version>
         <mongo.driver.version>4.8.0</mongo.driver.version>
 
         <slf4j.version>2.0.6</slf4j.version>
@@ -59,6 +59,7 @@
         <junit.jupiter.version>5.9.1</junit.jupiter.version>
         <mockito.version>4.11.0</mockito.version>
         <testcontainers.version>1.17.6</testcontainers.version>
+        <awaitility.version>4.2.0</awaitility.version>
         <jackson.version>2.14.1</jackson.version>
 
         <spring.version>5.3.24</spring.version>
@@ -246,6 +247,11 @@
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
                 <version>${javax.jaxb-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -463,7 +469,15 @@
                 <module>coverage-report</module>
             </modules>
         </profile>
-
+        <profile>
+            <id>java17-modules</id>
+            <activation>
+                <jdk>[17,)</jdk>
+            </activation>
+            <modules>
+                <module>spring-boot-3-integrationtests</module>
+            </modules>
+        </profile>
     </profiles>
 
     <repositories>
