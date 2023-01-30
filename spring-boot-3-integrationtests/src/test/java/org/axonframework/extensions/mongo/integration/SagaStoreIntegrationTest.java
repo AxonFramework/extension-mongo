@@ -56,7 +56,7 @@ class SagaStoreIntegrationTest {
     }
 
     @Test
-    void tokenStoreWillUseMongo() {
+    void sagaStoreWillUseMongo() {
         testApplicationContext
                 .withPropertyValues("axon.axonserver.enabled=false")
                 .withPropertyValues("axon.mongo.token-store.enabled=false")
