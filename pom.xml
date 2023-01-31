@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.7.0-SNAPSHOT</axon.version>
+        <axon.version>4.7.0</axon.version>
         <mongo.driver.version>4.8.0</mongo.driver.version>
 
         <slf4j.version>2.0.6</slf4j.version>
