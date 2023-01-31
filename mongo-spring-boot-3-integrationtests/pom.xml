@@ -25,7 +25,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>axon-spring-boot-3-integrationtests</artifactId>
+    <artifactId>axon-mongo-spring-boot-3-integrationtests</artifactId>
     <groupId>org.axonframework.extensions.mongo</groupId>
 
     <name>Axon Framework Mongo Extension Spring Boot 3 Integration Tests</name>

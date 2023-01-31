@@ -475,7 +475,7 @@
                 <jdk>[17,)</jdk>
             </activation>
             <modules>
-                <module>spring-boot-3-integrationtests</module>
+                <module>mongo-spring-boot-3-integrationtests</module>
             </modules>
         </profile>
     </profiles>
