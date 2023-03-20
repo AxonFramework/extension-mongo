@@ -62,7 +62,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <jackson.version>2.14.1</jackson.version>
 
-        <spring.version>5.3.25</spring.version>
+        <spring.version>5.3.26</spring.version>
         <spring.boot.version>2.7.9</spring.boot.version>
         <spring.data.mongodb.version>3.4.9</spring.data.mongodb.version>
         <commons-io.version>2.11.0</commons-io.version>
