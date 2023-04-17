@@ -64,7 +64,7 @@
 
         <spring.version>5.3.27</spring.version>
         <spring.boot.version>2.7.10</spring.boot.version>
-        <spring.data.mongodb.version>3.4.10</spring.data.mongodb.version>
+        <spring.data.mongodb.version>3.4.11</spring.data.mongodb.version>
         <commons-io.version>2.11.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
