@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022. Axon Framework
+ * Copyright (c) 2010-2023. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,25 +281,21 @@ public class MongoSequencedDeadLetterQueue<M extends EventMessage<?>> implements
     @Override
     public Iterable<DeadLetter<? extends M>> deadLetterSequence(@Nonnull Object sequenceIdentifier) {
         String stringSequenceIdentifier = toStringSequenceIdentifier(sequenceIdentifier);
-        return transactionManager.fetchInTransaction(
-                () -> mongoTemplate.deadLetterCollection()
-                                   .find(processingGroupAndSequenceIdentifierFilter(processingGroup,
-                                                                                    stringSequenceIdentifier))
-                                   .sort(indexSortAscending())
-                                   .map(DeadLetterEntry::new)
-                                   .map(this::toLetter)
-        );
+        return mongoTemplate.deadLetterCollection()
+                            .find(processingGroupAndSequenceIdentifierFilter(processingGroup,
+                                                                             stringSequenceIdentifier))
+                            .sort(indexSortAscending())
+                            .map(DeadLetterEntry::new)
+                            .map(this::toLetter);
     }
 
     @Override
     public Iterable<Iterable<DeadLetter<? extends M>>> deadLetters() {
-        return transactionManager.fetchInTransaction(
-                () -> sequenceIdentifierIterator(mongoTemplate.deadLetterCollection(), processingGroup)
-                        .map(sequenceIdentifier -> {
-                            assertNonNull(sequenceIdentifier, "SequenceIdentifier can not be null.");
-                            return deadLetterSequence(sequenceIdentifier);
-                        })
-        );
+        return sequenceIdentifierIterator(mongoTemplate.deadLetterCollection(), processingGroup)
+                .map(sequenceIdentifier -> {
+                    assertNonNull(sequenceIdentifier, "SequenceIdentifier can not be null.");
+                    return deadLetterSequence(sequenceIdentifier);
+                });
     }
 
     /**
