@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-public class MongoDeadLetteringWithTransActionsIntegrationTest extends DeadLetteringEventIntegrationTest {
+class MongoDeadLetteringWithTransactionsIntegrationTest extends DeadLetteringEventIntegrationTest {
 
     @Container
     private static final MongoDBContainer MONGO_CONTAINER = new MongoDBContainer("mongo:5");
