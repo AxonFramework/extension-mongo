@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022. Axon Framework
+ * Copyright (c) 2010-2023. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.axonframework.common.ReflectionUtils;
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.StorageStrategy;
+import org.axonframework.extensions.mongo.eventsourcing.tokenstore.MongoTokenStore;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.upcasting.event.EventUpcasterChain;
 import org.bson.Document;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +42,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.jmx.support.RegistrationPolicy;
 import org.springframework.test.context.ContextConfiguration;
+
+import java.time.Duration;
+import java.time.temporal.TemporalAmount;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -70,7 +75,8 @@ class MongoAutoConfigurationTest {
         reset(mockDatabase);
         reset(mockCollection);
         reset(mockFactory);
-        testApplicationContext = new ApplicationContextRunner();
+        testApplicationContext = new ApplicationContextRunner()
+                .withPropertyValues("axon.axonserver.enabled=false");
     }
 
     @Test
@@ -124,20 +130,29 @@ class MongoAutoConfigurationTest {
                 });
     }
 
+    @Test
+    void setTokenStoreClaimTimeout() {
+        testApplicationContext
+                .withUserConfiguration(DefaultContext.class)
+                .withPropertyValues("axon.eventhandling.tokenstore.claim-timeout=15s")
+                .run(context -> {
+                    Map<String, TokenStore> tokenStores =
+                            context.getBeansOfType(TokenStore.class);
+                    assertTrue(tokenStores.containsKey("tokenStore"));
+                    TokenStore tokenStore = tokenStores.get("tokenStore");
+                    TemporalAmount tokenClaimInterval = ReflectionUtils.getFieldValue(
+                            MongoTokenStore.class.getDeclaredField("claimTimeout"), tokenStore
+                    );
+                    assertEquals(Duration.ofSeconds(15L), tokenClaimInterval);
+                });
+    }
+
     @ContextConfiguration
     @EnableAutoConfiguration(exclude = {
             MongoDataAutoConfiguration.class
     })
     @EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
     public static class DefaultContext {
-
-        @Bean
-        public org.axonframework.config.Configuration mockConfiguration() {
-            EventUpcasterChain upcasterChain = new EventUpcasterChain();
-            org.axonframework.config.Configuration configuration = mock(org.axonframework.config.Configuration.class);
-            when(configuration.upcasterChain()).thenReturn(upcasterChain);
-            return configuration;
-        }
 
         @Bean
         @Primary
