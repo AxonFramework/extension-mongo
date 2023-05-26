@@ -33,6 +33,7 @@ import org.axonframework.extensions.mongo.spring.SpringMongoTransactionManager;
 import org.axonframework.extensions.mongo.springboot.AxonMongoProperties;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.springboot.TokenStoreProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -62,7 +63,7 @@ import static java.util.Objects.isNull;
  * @since 4.7.0
  */
 @AutoConfiguration
-@EnableConfigurationProperties(AxonMongoProperties.class)
+@EnableConfigurationProperties({AxonMongoProperties.class, TokenStoreProperties.class})
 @AutoConfigureAfter(name = {
         "org.axonframework.springboot.autoconfig.TransactionAutoConfiguration",
         "org.axonframework.springboot.autoconfig.JdbcAutoConfiguration"
@@ -70,9 +71,14 @@ import static java.util.Objects.isNull;
 public class MongoAutoConfiguration {
 
     private final AxonMongoProperties axonMongoProperties;
+    private final TokenStoreProperties tokenStoreProperties;
 
-    public MongoAutoConfiguration(AxonMongoProperties axonMongoProperties) {
+    public MongoAutoConfiguration(
+            AxonMongoProperties axonMongoProperties,
+            TokenStoreProperties tokenStoreProperties
+    ) {
         this.axonMongoProperties = axonMongoProperties;
+        this.tokenStoreProperties = tokenStoreProperties;
     }
 
     @Bean
@@ -118,6 +124,7 @@ public class MongoAutoConfiguration {
                               .mongoTemplate(mongoTemplate)
                               .transactionManager(transactionManager)
                               .serializer(serializer)
+                              .claimTimeout(tokenStoreProperties.getClaimTimeout())
                               .build();
     }
 
