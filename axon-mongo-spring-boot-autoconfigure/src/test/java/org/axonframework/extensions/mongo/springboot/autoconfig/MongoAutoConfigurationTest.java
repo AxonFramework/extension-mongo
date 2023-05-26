@@ -22,10 +22,14 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.axonframework.common.ReflectionUtils;
 import org.axonframework.common.transaction.TransactionManager;
+import org.axonframework.config.EventProcessingModule;
+import org.axonframework.eventhandling.EventMessage;
 import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine;
+import org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue;
 import org.axonframework.extensions.mongo.eventsourcing.eventstore.StorageStrategy;
 import org.axonframework.extensions.mongo.eventsourcing.tokenstore.MongoTokenStore;
+import org.axonframework.messaging.deadletter.SequencedDeadLetterQueue;
 import org.axonframework.modelling.saga.repository.SagaStore;
 import org.axonframework.serialization.Serializer;
 import org.bson.Document;
@@ -46,6 +50,7 @@ import org.springframework.test.context.ContextConfiguration;
 import java.time.Duration;
 import java.time.temporal.TemporalAmount;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -144,6 +149,40 @@ class MongoAutoConfigurationTest {
                             MongoTokenStore.class.getDeclaredField("claimTimeout"), tokenStore
                     );
                     assertEquals(Duration.ofSeconds(15L), tokenClaimInterval);
+                });
+    }
+
+    @Test
+    void sequencedDeadLetterQueueCanBeSetViaSpringConfiguration() {
+        testApplicationContext
+                .withUserConfiguration(DefaultContext.class)
+                .withPropertyValues("axon.eventhandling.processors.first.dlq.enabled=true")
+                .run(context -> {
+                    EventProcessingModule eventProcessingConfig = context.getBean(EventProcessingModule.class);
+                    assertNotNull(eventProcessingConfig);
+                    Optional<SequencedDeadLetterQueue<EventMessage<?>>> dlq =
+                            eventProcessingConfig.deadLetterQueue("first");
+                    assertTrue(dlq.isPresent());
+                    assertTrue(dlq.get() instanceof MongoSequencedDeadLetterQueue);
+                    dlq = eventProcessingConfig.deadLetterQueue("second");
+                    assertFalse(dlq.isPresent());
+                });
+    }
+
+    @Test
+    void deadLetterProviderCanBeDisabled() {
+        testApplicationContext
+                .withUserConfiguration(DefaultContext.class)
+                .withPropertyValues(
+                        "axon.mongo.event-handling.dlq-enabled=false",
+                        "axon.eventhandling.processors.first.dlq.enabled=true"
+                )
+                .run(context -> {
+                    EventProcessingModule eventProcessingConfig = context.getBean(EventProcessingModule.class);
+                    assertNotNull(eventProcessingConfig);
+                    Optional<SequencedDeadLetterQueue<EventMessage<?>>> dlq =
+                            eventProcessingConfig.deadLetterQueue("first");
+                    assertFalse(dlq.isPresent());
                 });
     }
 
