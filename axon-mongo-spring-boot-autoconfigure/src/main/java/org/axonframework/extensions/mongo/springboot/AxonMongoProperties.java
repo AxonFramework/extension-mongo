@@ -186,20 +186,20 @@ public class AxonMongoProperties {
         /**
          * Indicates whether setting a
          * {@link org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue} as default
-         * sequenced dead letter queue is enabled.
+         * sequenced dead-letter queue is enabled.
          *
-         * @return true if creating the token store is enabled, false if otherwise
+         * @return {@code true} if creating the sequenced dead-letter queue is enabled, {@code false} otherwise.
          */
         public boolean isDlqEnabled() {
             return dlqEnabled;
         }
 
         /**
-         * Enables (if {@code true}, default) or disables (if {@code false}) setting a *
+         * Enables (if {@code true}, default) or disables (if {@code false}) setting a
          * {@link org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue} as default
          * sequenced dead letter queue.
          *
-         * @param dlqEnabled whether to enable setting a default for the sequenced dead letter queue.
+         * @param dlqEnabled Whether to enable setting a default for the sequenced dead-letter queue.
          */
         public void setDlqEnabled(boolean dlqEnabled) {
             this.dlqEnabled = dlqEnabled;
