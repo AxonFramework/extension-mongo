@@ -1,1 +1,2 @@
 org.axonframework.extensions.mongo.springboot.autoconfig.MongoAutoConfiguration
+org.axonframework.extensions.mongo.springboot.autoconfig.MongoDeadLetterProviderAutoConfiguration

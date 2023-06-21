@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022. Axon Framework
+ * Copyright (c) 2010-2023. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ public class AxonMongoProperties {
      * The AutoConfiguration settings for the token store
      */
     private TokenStore tokenStore = new TokenStore();
+
+    /**
+     * The AutoConfiguration settings for event handling related to this extension
+     */
+    private EventHandling eventHandling = new EventHandling();
 
     /**
      * The AutoConfiguration settings for the event store
@@ -84,6 +89,24 @@ public class AxonMongoProperties {
      */
     public void setTokenStore(TokenStore tokenStore) {
         this.tokenStore = tokenStore;
+    }
+
+    /**
+     * Retrieves the AutoConfiguration settings related to event handling.
+     *
+     * @return the AutoConfiguration settings related to event handling.
+     */
+    public EventHandling getEventHandling() {
+        return eventHandling;
+    }
+
+    /**
+     * Defines the AutoConfiguration settings related to event handling.
+     *
+     * @param eventHandling the AutoConfiguration settings for the token store.
+     */
+    public void setEventHandling(EventHandling eventHandling) {
+        this.eventHandling = eventHandling;
     }
 
     /**
@@ -148,6 +171,38 @@ public class AxonMongoProperties {
          */
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    public static class EventHandling {
+
+        /**
+         * Enables setting the
+         * {@link org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue} as the
+         * default {@link org.axonframework.messaging.deadletter.SequencedDeadLetterQueue}. Defaults to "true".
+         */
+        private boolean dlqEnabled = true;
+
+        /**
+         * Indicates whether setting a
+         * {@link org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue} as default
+         * sequenced dead-letter queue is enabled.
+         *
+         * @return {@code true} if creating the sequenced dead-letter queue is enabled, {@code false} otherwise.
+         */
+        public boolean isDlqEnabled() {
+            return dlqEnabled;
+        }
+
+        /**
+         * Enables (if {@code true}, default) or disables (if {@code false}) setting a
+         * {@link org.axonframework.extensions.mongo.eventhandling.deadletter.MongoSequencedDeadLetterQueue} as default
+         * sequenced dead letter queue.
+         *
+         * @param dlqEnabled Whether to enable setting a default for the sequenced dead-letter queue.
+         */
+        public void setDlqEnabled(boolean dlqEnabled) {
+            this.dlqEnabled = dlqEnabled;
         }
     }
 

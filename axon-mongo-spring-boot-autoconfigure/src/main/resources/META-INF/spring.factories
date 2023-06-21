@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.axonframework.extensions.mongo.springboot.autoconfig.MongoAutoConfiguration
+  org.axonframework.extensions.mongo.springboot.autoconfig.MongoAutoConfiguration,\
+  org.axonframework.extensions.mongo.springboot.autoconfig.MongoDeadLetterProviderAutoConfiguration
