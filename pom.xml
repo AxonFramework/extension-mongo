@@ -32,14 +32,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>Axon Framework - Mongo Extension</name>
-    <description>An Axon Framework extension allowing Mongo integration.</description>
+    <description>An Axon Framework extension providing Mongo integration.</description>
 
     <inceptionYear>2010</inceptionYear>
-    <url>http://www.axonframework.org</url>
+    <url>https://axoniq.io/</url>
     <licenses>
         <license>
             <name>Apache 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
     </licenses>
     <issueManagement>
@@ -49,42 +49,80 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
+        <!-- Main -->
         <axon.version>4.8.0</axon.version>
         <mongo.driver.version>4.8.0</mongo.driver.version>
-
+        <!-- Logging -->
         <slf4j.version>2.0.7</slf4j.version>
         <log4j.version>2.20.0</log4j.version>
-
-        <junit.jupiter.version>5.9.1</junit.jupiter.version>
-        <mockito.version>4.11.0</mockito.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
-        <awaitility.version>4.2.0</awaitility.version>
+        <!-- Serialization -->
         <jackson.version>2.14.1</jackson.version>
-
+        <!-- Spring -->
         <spring.version>5.3.28</spring.version>
         <spring.boot.version>2.7.12</spring.boot.version>
         <spring.data.mongodb.version>3.4.13</spring.data.mongodb.version>
+        <!-- Other -->
         <commons-io.version>2.13.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
-
-        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-        <maven-compiler.version>3.11.0</maven-compiler.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
+        <!-- Testing -->
+        <awaitility.version>4.2.0</awaitility.version>
+        <junit.jupiter.version>5.9.1</junit.jupiter.version>
+        <mockito.version>4.11.0</mockito.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
+        <!-- Build / Plugins -->
+        <jacoco-maven.version>0.8.8</jacoco-maven.version>
+        <maven-assembly.version>3.6.0</maven-assembly.version>
+        <maven-clean.version>3.3.1</maven-clean.version>
+        <maven-compiler.version>3.11.0</maven-compiler.version>
+        <maven-deploy.version>3.0.0</maven-deploy.version>
+        <maven-enforcer.version>3.3.0</maven-enforcer.version>
+        <maven-gpg.version>3.1.0</maven-gpg.version>
+        <maven-install.version>3.1.1</maven-install.version>
+        <maven-jar.version>3.3.0</maven-jar.version>
+        <maven-javadoc.version>3.5.0</maven-javadoc.version>
+        <maven-release.version>3.0.1</maven-release.version>
+        <maven-source.version>3.3.0</maven-source.version>
+        <maven-surefire.version>2.22.2</maven-surefire.version>
+        <maven-resources.version>3.3.1</maven-resources.version>
     </properties>
 
     <dependencies>
-        <!-- Test dependencies -->
-        <!-- Spring -->
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Logging -->
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
@@ -127,35 +165,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- JUnit -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Mockito -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Test Containers-->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mongodb</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Miscellaneous-->
+        <!-- Other-->
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
@@ -176,13 +186,27 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- JUnit 5 -->
+            <!-- Testing -->
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>${junit.jupiter.version}</version>
             </dependency>
-            <!-- Testcontainers -->
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
@@ -191,11 +215,6 @@
                 <scope>import</scope>
             </dependency>
             <!-- Spring -->
-            <dependency>
-                <groupId>org.springframework.data</groupId>
-                <artifactId>spring-data-mongodb</artifactId>
-                <version>${spring.data.mongodb.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot</artifactId>
@@ -212,6 +231,11 @@
                 <version>${spring.boot.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-mongodb</artifactId>
+                <version>${spring.data.mongodb.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter</artifactId>
                 <version>${spring.boot.version}</version>
@@ -221,18 +245,7 @@
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring.boot.version}</version>
             </dependency>
-            <!-- Mockito -->
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>${mockito.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-junit-jupiter</artifactId>
-                <version>${mockito.version}</version>
-            </dependency>
-            <!-- Miscellaneous -->
+            <!-- Other -->
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
@@ -248,11 +261,6 @@
                 <artifactId>jaxb-api</artifactId>
                 <version>${javax.jaxb-api.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.awaitility</groupId>
-                <artifactId>awaitility</artifactId>
-                <version>${awaitility.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -260,27 +268,30 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>${maven-clean.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>${maven-install.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
+
         <plugins>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
+            <!-- compile -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler.version}</version>
@@ -290,29 +301,9 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <descriptorSourceDirectory>assembly</descriptorSourceDirectory>
-                    <archiverConfig>
-                        <duplicateBehavior>skip</duplicateBehavior>
-                    </archiverConfig>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <localCheckout>true</localCheckout>
-                    <pushChanges>false</pushChanges>
-                </configuration>
-            </plugin>
+            <!-- test -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
@@ -326,13 +317,35 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+            <!-- package -->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly.version}</version>
+                <configuration>
+                    <descriptorSourceDirectory>assembly</descriptorSourceDirectory>
+                    <archiverConfig>
+                        <duplicateBehavior>skip</duplicateBehavior>
+                    </archiverConfig>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>${maven-javadoc.version}</version>
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
-                        <phase>deploy</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -343,19 +356,8 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-source.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -366,10 +368,15 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- deploy -->
             <plugin>
-                <!-- Just to make sure deployed artifacts are always built (and tested) using JDK 8+ -->
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy.version}</version>
+            </plugin>
+            <plugin>
+                <!-- just to make sure deployed artifacts are always built (and tested) using JDK 8+ -->
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-enforcer.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-java</id>
@@ -390,39 +397,28 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>${maven-release.version}</version>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <localCheckout>true</localCheckout>
+                    <pushChanges>false</pushChanges>
+                    <releaseProfiles>release-sign-artifacts</releaseProfiles>
+                    <tagNameFormat>axon-mongo-@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources.version}</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        <profile>
-            <id>release-sign-artifacts</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <!-- Suppress MavenModelInspection -->
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>coverage</id>
             <build>
@@ -456,7 +452,6 @@
                 <defaultGoal>verify</defaultGoal>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven-surefire-plugin.version}</version>
                         <configuration>
@@ -469,6 +464,7 @@
                 <module>coverage-report</module>
             </modules>
         </profile>
+
         <profile>
             <id>java17-modules</id>
             <activation>
@@ -478,12 +474,39 @@
                 <module>mongo-spring-boot-3-integrationtests</module>
             </modules>
         </profile>
+
+        <profile>
+            <id>release-sign-artifacts</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <!-- Suppress MavenModelInspection -->
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
         <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
         </repository>
     </repositories>
 
@@ -500,6 +523,7 @@
             <uniqueVersion>false</uniqueVersion>
         </repository>
     </distributionManagement>
+
     <scm>
         <connection>scm:git:git://github.com/AxonFramework/extension-mongo.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-mongo.git</developerConnection>
@@ -523,7 +547,25 @@
             <organization>AxonIQ</organization>
             <organizationUrl>https://axoniq.io</organizationUrl>
             <roles>
-                <role>Committer</role>
+                <role>Lead Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Gerard Klijs</name>
+            <email>gerard.klijs@axoniq.io</email>
+            <organization>AxonIQ</organization>
+            <organizationUrl>https://axoniq.io</organizationUrl>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Mitchell Herrijgers</name>
+            <email>mitchell.herrijgers@axoniq.io</email>
+            <organization>AxonIQ</organization>
+            <organizationUrl>https://axoniq.io</organizationUrl>
+            <roles>
+                <role>Developer</role>
             </roles>
         </developer>
     </developers>
