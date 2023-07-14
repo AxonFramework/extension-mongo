@@ -72,7 +72,7 @@
         <mockito.version>4.11.0</mockito.version>
         <testcontainers.version>1.18.3</testcontainers.version>
         <!-- Build / Plugins -->
-        <jacoco-maven.version>0.8.8</jacoco-maven.version>
+        <jacoco-maven.version>0.8.10</jacoco-maven.version>
         <maven-assembly.version>3.6.0</maven-assembly.version>
         <maven-clean.version>3.3.1</maven-clean.version>
         <maven-compiler.version>3.11.0</maven-compiler.version>
@@ -426,7 +426,6 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>${jacoco-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <goals>
