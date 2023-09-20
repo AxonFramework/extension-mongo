@@ -14,16 +14,24 @@ This set up helps you create a well structured application without having to bot
 The main focus can thus become your business functionality.
 
 This repository provides an extension to the Axon Framework: Mongo.
-It provides functionality to leverage Mongo as an `EventStorageEngine` (to be used by an `EventStore`) and `TokenStore`.
-  
+It provides functionality to leverage Mongo as a `TokenStore`, `SequncedDeadLetterQueue`, `SagaStore` and
+an `EventStorageEngine`* (to be used by an `EventStore`).
+
 For more information on anything Axon, please visit our website, [http://axoniq.io](http://axoniq.io).
+
+*Please note that from Axon Framework 4 we no longer recommend using MongoDB as an event store. There are several
+problems. There is no sequence generator, which makes tracking tokens big and sometimes unreliable. After many events,
+the index will become too large to fit in memory. Above all,
+the [performance](https://www.digitalfrontiers.de/wp-content/uploads/2022/04/Digital-Frontiers_Axon-Server-Benchmarks-1.pdf)
+will be a lot worse compared to Axon Server.
 
 ## Getting started
 
 The [reference guide](https://docs.axoniq.io) contains a separate chapter for all the extensions.
 The Mongo extension description can be found [here](https://docs.axoniq.io/reference-guide/extensions/mongo).
-This extension should be regarded as a partial replacement of [Axon Server](https://axoniq.io/product-overview/axon-server),
- since it only cover the event storage part.
+This extension should be regarded as a partial replacement
+of [Axon Server](https://axoniq.io/product-overview/axon-server),
+since it only cover the event storage part.
 
 ## Receiving help
 
