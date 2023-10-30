@@ -40,7 +40,7 @@
         <axon.version>4.9.0</axon.version>
         <testcontainers.version>1.19.1</testcontainers.version>
         <!-- Build / Plugin -->
-        <jacoco-maven.version>0.8.10</jacoco-maven.version>
+        <jacoco-maven.version>0.8.11</jacoco-maven.version>
         <maven-jar.version>3.3.0</maven-jar.version>
         <maven-surefire.version>3.2.1</maven-surefire.version>
     </properties>
