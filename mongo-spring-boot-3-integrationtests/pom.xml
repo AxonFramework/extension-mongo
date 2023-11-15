@@ -38,7 +38,7 @@
 
     <properties>
         <axon.version>4.9.0</axon.version>
-        <testcontainers.version>1.19.1</testcontainers.version>
+        <testcontainers.version>1.19.2</testcontainers.version>
         <!-- Build / Plugin -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
         <maven-jar.version>3.3.0</maven-jar.version>
