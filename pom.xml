@@ -70,7 +70,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <junit.jupiter.version>5.10.0</junit.jupiter.version>
         <mockito.version>4.11.0</mockito.version>
-        <testcontainers.version>1.19.1</testcontainers.version>
+        <testcontainers.version>1.19.2</testcontainers.version>
         <!-- Build / Plugins -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
         <maven-assembly.version>3.6.0</maven-assembly.version>
