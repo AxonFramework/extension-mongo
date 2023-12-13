@@ -42,7 +42,7 @@
         <!-- Build / Plugin -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
         <maven-jar.version>3.3.0</maven-jar.version>
-        <maven-surefire.version>3.2.2</maven-surefire.version>
+        <maven-surefire.version>3.2.3</maven-surefire.version>
     </properties>
 
     <dependencies>
