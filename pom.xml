@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2010-2023. Axon Framework
+  ~ Copyright (c) 2010-2024. Axon Framework
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -53,16 +53,16 @@
         <axon.version>4.9.0</axon.version>
         <mongo.driver.version>4.11.1</mongo.driver.version>
         <!-- Logging -->
-        <slf4j.version>2.0.9</slf4j.version>
-        <log4j.version>2.22.0</log4j.version>
+        <slf4j.version>2.0.12</slf4j.version>
+        <log4j.version>2.23.1</log4j.version>
         <!-- Serialization -->
         <jackson.version>2.16.0</jackson.version>
         <!-- Spring -->
-        <spring.version>5.3.31</spring.version>
+        <spring.version>5.3.33</spring.version>
         <spring.boot.version>2.7.18</spring.boot.version>
         <spring.data.mongodb.version>3.4.18</spring.data.mongodb.version>
         <!-- Other -->
-        <commons-io.version>2.15.1</commons-io.version>
+        <commons-io.version>2.16.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
@@ -70,12 +70,12 @@
         <awaitility.version>4.2.0</awaitility.version>
         <junit.jupiter.version>5.10.1</junit.jupiter.version>
         <mockito.version>4.11.0</mockito.version>
-        <testcontainers.version>1.19.3</testcontainers.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
         <!-- Build / Plugins -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
-        <maven-assembly.version>3.6.0</maven-assembly.version>
+        <maven-assembly.version>3.7.1</maven-assembly.version>
         <maven-clean.version>3.3.2</maven-clean.version>
-        <maven-compiler.version>3.11.0</maven-compiler.version>
+        <maven-compiler.version>3.13.0</maven-compiler.version>
         <maven-deploy.version>3.0.0</maven-deploy.version>
         <maven-enforcer.version>3.4.1</maven-enforcer.version>
         <maven-gpg.version>3.1.0</maven-gpg.version>
@@ -83,8 +83,8 @@
         <maven-jar.version>3.3.0</maven-jar.version>
         <maven-javadoc.version>3.6.3</maven-javadoc.version>
         <maven-release.version>3.0.1</maven-release.version>
-        <maven-source.version>3.3.0</maven-source.version>
-        <maven-surefire.version>3.2.3</maven-surefire.version>
+        <maven-source.version>3.3.1</maven-source.version>
+        <maven-surefire.version>3.2.5</maven-surefire.version>
         <maven-resources.version>3.3.1</maven-resources.version>
     </properties>
 
@@ -479,7 +479,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.2</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
