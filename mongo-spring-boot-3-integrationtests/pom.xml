@@ -41,7 +41,7 @@
         <testcontainers.version>1.19.7</testcontainers.version>
         <!-- Build / Plugin -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
-        <maven-jar.version>3.3.0</maven-jar.version>
+        <maven-jar.version>3.4.0</maven-jar.version>
         <maven-surefire.version>3.2.5</maven-surefire.version>
     </properties>
 
