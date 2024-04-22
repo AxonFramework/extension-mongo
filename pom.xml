@@ -80,7 +80,7 @@
         <maven-enforcer.version>3.4.1</maven-enforcer.version>
         <maven-gpg.version>3.1.0</maven-gpg.version>
         <maven-install.version>3.1.1</maven-install.version>
-        <maven-jar.version>3.4.0</maven-jar.version>
+        <maven-jar.version>3.4.1</maven-jar.version>
         <maven-javadoc.version>3.6.3</maven-javadoc.version>
         <maven-release.version>3.0.1</maven-release.version>
         <maven-source.version>3.3.1</maven-source.version>
@@ -479,7 +479,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.3</version>
+                        <version>3.2.4</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
