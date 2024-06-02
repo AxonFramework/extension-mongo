@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <version>3.3.0</version>
         <relativePath/>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,7 +38,7 @@
 
     <properties>
         <axon.version>4.9.0</axon.version>
-        <testcontainers.version>1.19.7</testcontainers.version>
+        <testcontainers.version>1.19.8</testcontainers.version>
         <!-- Build / Plugin -->
         <jacoco-maven.version>0.8.11</jacoco-maven.version>
         <maven-jar.version>3.4.1</maven-jar.version>
