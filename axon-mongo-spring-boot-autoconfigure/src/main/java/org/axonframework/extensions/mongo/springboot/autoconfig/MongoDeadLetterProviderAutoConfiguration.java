@@ -16,7 +16,6 @@
 
 package org.axonframework.extensions.mongo.springboot.autoconfig;
 
-import org.axonframework.axonserver.connector.AxonServerConfiguration;
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.config.EventProcessingModule;
 import org.axonframework.extensions.mongo.MongoTemplate;
@@ -39,16 +38,13 @@ public class MongoDeadLetterProviderAutoConfiguration {
 
     private final AxonMongoProperties axonMongoProperties;
     private final EventProcessorProperties eventProcessorProperties;
-    private final AxonServerConfiguration axonServerConfiguration;
 
     public MongoDeadLetterProviderAutoConfiguration(
             AxonMongoProperties axonMongoProperties,
-            EventProcessorProperties eventProcessorProperties,
-            AxonServerConfiguration axonServerConfiguration
+            EventProcessorProperties eventProcessorProperties
     ) {
         this.axonMongoProperties = axonMongoProperties;
         this.eventProcessorProperties = eventProcessorProperties;
-        this.axonServerConfiguration = axonServerConfiguration;
     }
 
     @Autowired
@@ -63,7 +59,7 @@ public class MongoDeadLetterProviderAutoConfiguration {
         }
         processingModule.registerDeadLetterQueueProvider(
                 processingGroup -> {
-                    if (dlqEnabled(processingGroup) || persistentStreamDlqEnabled(processingGroup)) {
+                    if (dlqEnabled(processingGroup)) {
                         return configuration -> MongoSequencedDeadLetterQueue
                                 .builder()
                                 .processingGroup(processingGroup)
@@ -82,17 +78,4 @@ public class MongoDeadLetterProviderAutoConfiguration {
                        .map(processorSettings -> processorSettings.getDlq().isEnabled())
                        .orElse(false);
     }
-
-    private boolean persistentStreamDlqEnabled(String processingGroup) {
-        if (axonServerConfiguration.getEventhandling() == null || axonServerConfiguration.getEventhandling().getPersistentStreamProcessors() == null) {
-            return false;
-        }
-
-        return Optional.ofNullable (axonServerConfiguration.getEventhandling()
-                                                           .getPersistentStreamProcessors().get(processingGroup))
-                       .map(AxonServerConfiguration.PersistentStreamProcessorSettings::getDlq)
-                       .map(AxonServerConfiguration.Dlq::isEnabled)
-                       .orElse(false);
-    }
-
 }
