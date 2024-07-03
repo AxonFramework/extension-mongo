@@ -1,0 +1,35 @@
+:navtitle: Configuration of the Event Store with Spring
+= Configuration of the Event Store with Spring
+
+[source,java]
+----
+@Configuration
+public class AxonConfig {
+    // omitting other configuration methods...
+
+    // The EmbeddedEventStore delegates actual storage and retrieval of events to an EventStorageEngine.
+    @Bean
+    public EventStore eventStore(EventStorageEngine storageEngine,
+                                 GlobalMetricRegistry metricRegistry) {
+        return EmbeddedEventStore.builder()
+                                 .storageEngine(storageEngine)
+                                 .messageMonitor(metricRegistry.registerEventBus("eventStore"))
+                                 .spanFactory(spanFactory)
+                                 // ...
+                                 .build();
+    }
+
+    // The MongoEventStorageEngine stores each event in a separate MongoDB document.
+    @Bean
+    public EventStorageEngine storageEngine(MongoDatabaseFactory factory,
+                                            TransactionManager transactionManager) {
+        return MongoEventStorageEngine.builder()
+                                      .mongoTemplate(SpringMongoTemplate.builder()
+                                                                        .factory(factory)
+                                                                        .build())
+                                      .transactionManager(transactionManager)
+                                      // ...
+                                      .build();
+    }
+}
+----
