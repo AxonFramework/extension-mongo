@@ -1,0 +1,2 @@
+:navtitle: MongoDB Extension
+= MongoDB Extension
