@@ -1,4 +1,0 @@
-* xref:ROOT:index.adoc[]
-** xref:ROOT:spring-config.adoc[]
-** xref:ROOT:springboot-config.adoc[]
-** xref:ROOT:dlq-spring-config.adoc[]
