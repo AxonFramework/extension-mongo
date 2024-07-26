@@ -39,7 +39,7 @@
     <properties>
         <!-- Main -->
         <axon.version>4.10.0</axon.version>
-        <mongo.driver.version>4.11.1</mongo.driver.version>
+        <mongo.driver.version>5.1.2</mongo.driver.version>
         <!-- Testing -->
         <testcontainers.version>1.20.0</testcontainers.version>
         <!-- Build / Plugin -->
