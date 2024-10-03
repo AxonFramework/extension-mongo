@@ -4,7 +4,7 @@ This folder contains the docs related to the MongoDB Extension for Axon Framewor
 
 The following are the current documentation sources (folders):
 
-- `extension-guide` : [The MongoDB Extension Guide](https://library.axoniq.io/mongodb_extension_guide/index.html)
+- `extension-guide` : [The MongoDB Extension Guide](https://library.axoniq.io/mongodb-extension-reference/index.html)
 
 ## Contributing to the docs.
 

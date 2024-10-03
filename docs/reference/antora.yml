@@ -1,0 +1,14 @@
+name: mongodb-extension-reference
+title: MongoDB Extension Reference
+version: true
+prerelease: true
+start_page: ROOT:index.adoc
+
+asciidoc:
+  attributes:
+    component_description: Extension adding MongoDB integration for all Axon Framework components requiring storage
+    type: extension-reference
+    group: axon-framework
+
+nav:
+  - modules/nav.adoc
