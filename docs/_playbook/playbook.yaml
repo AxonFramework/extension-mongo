@@ -1,6 +1,6 @@
 site:
   title: MongoDB Extension docs PREVIEW
-  start_page: mongodb_extension_guide::index.adoc
+  start_page: mongodb-extension-reference::index.adoc
 
 content:
   sources:
