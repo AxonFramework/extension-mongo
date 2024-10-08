@@ -2,3 +2,4 @@
 ** xref:ROOT:spring-config.adoc[]
 ** xref:ROOT:springboot-config.adoc[]
 ** xref:ROOT:dlq-spring-config.adoc[]
+* xref:ROOT:release-notes.adoc[]
