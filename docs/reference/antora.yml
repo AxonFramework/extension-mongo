@@ -1,6 +1,8 @@
 name: mongodb-extension-reference
 title: MongoDB Extension Reference
-version: true
+version:
+  axon-mongo-(?<version>+({0..9}).+({0..9})).*: $<version>
+  master: development
 prerelease: true
 start_page: ROOT:index.adoc
 
