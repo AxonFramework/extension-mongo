@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2010-2024. Axon Framework
+  ~ Copyright (c) 2010-2025. Axon Framework
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Main -->
-        <axon.version>4.10.0</axon.version>
+        <axon.version>4.11.0</axon.version>
         <mongo.driver.version>5.1.2</mongo.driver.version>
         <!-- Logging -->
         <slf4j.version>2.0.16</slf4j.version>
