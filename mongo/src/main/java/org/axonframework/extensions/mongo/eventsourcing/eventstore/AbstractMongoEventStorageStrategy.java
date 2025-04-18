@@ -181,7 +181,6 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
         //noinspection ConstantConditions
         AtomicReference<MongoTrackingToken> previousToken = new AtomicReference<>((MongoTrackingToken) lastToken);
         List<TrackedEventData<?>> results = new ArrayList<>();
-
         try (MongoCursor<Document> iterator = cursor.iterator()) {
             while (results.size() < batchSize && iterator.hasNext()) {
                 Document document = iterator.next();
