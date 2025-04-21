@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2025. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,16 +181,18 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
         //noinspection ConstantConditions
         AtomicReference<MongoTrackingToken> previousToken = new AtomicReference<>((MongoTrackingToken) lastToken);
         List<TrackedEventData<?>> results = new ArrayList<>();
-        for (MongoCursor<Document> iterator = cursor.iterator(); results.size() < batchSize && iterator.hasNext(); ) {
-            Document document = iterator.next();
-            extractEvents(document)
-                    .filter(ed -> previousToken.get() == null
-                            || !previousToken.get().getKnownEventIds().contains(ed.getEventIdentifier()))
-                    .map(event -> new TrackedMongoEventEntry<>(event, previousToken.updateAndGet(
-                            token -> token == null
-                                    ? MongoTrackingToken.of(event.getTimestamp(), event.getEventIdentifier())
-                                    : token.advanceTo(event.getTimestamp(), event.getEventIdentifier(), lookBackTime))))
-                    .forEach(results::add);
+        try (MongoCursor<Document> iterator = cursor.iterator()) {
+            while (results.size() < batchSize && iterator.hasNext()) {
+                Document document = iterator.next();
+                extractEvents(document)
+                        .filter(ed -> previousToken.get() == null
+                                || !previousToken.get().getKnownEventIds().contains(ed.getEventIdentifier()))
+                        .map(event -> new TrackedMongoEventEntry<>(event, previousToken.updateAndGet(
+                                token -> token == null
+                                        ? MongoTrackingToken.of(event.getTimestamp(), event.getEventIdentifier())
+                                        : token.advanceTo(event.getTimestamp(), event.getEventIdentifier(), lookBackTime))))
+                        .forEach(results::add);
+            }
         }
         return results;
     }
