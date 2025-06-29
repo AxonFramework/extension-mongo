@@ -41,7 +41,7 @@
         <axon.version>4.11.2</axon.version>
         <mongo.driver.version>5.4.0</mongo.driver.version>
         <!-- Testing -->
-        <testcontainers.version>1.21.2</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
         <!-- Build / Plugin -->
         <jacoco-maven.version>0.8.13</jacoco-maven.version>
         <maven-jar.version>3.4.2</maven-jar.version>
