@@ -449,12 +449,11 @@ class MongoTokenStoreTest {
     @Test
     void testRetrieveStorageIdentifierReturnsExistingConfigTokenIdentifier() {
         String expectedStorageIdentifier = UUID.randomUUID().toString();
-        String expectedStorageIdentifier1 = UUID.randomUUID().toString();
         String expectedConfigTokenProcessorName = "__config";
         int expectedConfigTokenSegmentId = 0;
 
         AbstractTokenEntry<?> testTokenEntry = new GenericTokenEntry<>(
-                new ConfigToken(Collections.singletonMap("id", expectedStorageIdentifier1)),
+                new ConfigToken(Collections.singletonMap("id", expectedStorageIdentifier)),
                 serializer, contentType, expectedConfigTokenProcessorName, expectedConfigTokenSegmentId
         );
 

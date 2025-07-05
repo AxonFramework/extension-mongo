@@ -94,7 +94,8 @@ public class EventEntry implements DomainEventData<Object> {
         else if(timestampField instanceof Instant) {
             timestamp = (Instant) timestampField;
         }
-        else timestamp = parseInstant((String)timestampField);
+        else timestamp = parseInstant((String)timestampField);//to ensure backward compatibility
+        // when timestamps were written as strings
 
         payloadType = (String) dbObject.get(configuration.payloadTypeProperty());
         payloadRevision = (String) dbObject.get(configuration.payloadRevisionProperty());
