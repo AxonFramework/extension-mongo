@@ -94,7 +94,7 @@ class MongoTokenStoreTest {
     @BeforeEach
     void setUp() {
         mongoTemplate = MongoTemplateFactory.build(
-                MONGO_CONTAINER.getHost(), MONGO_CONTAINER.getFirstMappedPort()
+                "localhost", 27017
         );
         trackingTokensCollection = mongoTemplate.trackingTokensCollection();
         trackingTokensCollection.drop();
@@ -456,10 +456,11 @@ class MongoTokenStoreTest {
                 new ConfigToken(Collections.singletonMap("id", expectedStorageIdentifier)),
                 serializer, contentType, expectedConfigTokenProcessorName, expectedConfigTokenSegmentId
         );
+
         Document testConfigTokenDocument = new Document("processorName", testTokenEntry.getProcessorName())
                 .append("segment", testTokenEntry.getSegment())
                 .append("owner", testTokenEntry.getOwner())
-                .append("timestamp", testTokenEntry.timestamp().toEpochMilli())
+                .append("timestamp", testTokenEntry.timestamp())
                 .append("token", testTokenEntry.getSerializedToken().getData())
                 .append("tokenType", testTokenEntry.getSerializedToken().getType().getName());
 
