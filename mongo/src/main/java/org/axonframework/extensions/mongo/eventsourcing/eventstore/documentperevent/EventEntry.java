@@ -17,7 +17,6 @@
 package org.axonframework.extensions.mongo.eventsourcing.eventstore.documentperevent;
 
 import com.mongodb.DBObject;
-import org.axonframework.common.DateTimeUtils;
 import org.axonframework.eventhandling.DomainEventData;
 import org.axonframework.eventhandling.DomainEventMessage;
 import org.axonframework.serialization.SerializedMetaData;
@@ -27,9 +26,10 @@ import org.axonframework.serialization.SimpleSerializedObject;
 import org.bson.Document;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
 
-import static org.axonframework.common.DateTimeUtils.formatInstant;
+import static org.axonframework.common.DateTimeUtils.parseInstant;
 
 /**
  * Implementation of a serialized event message that can be used to create a Mongo document.
@@ -42,7 +42,7 @@ public class EventEntry implements DomainEventData<Object> {
     private final String aggregateIdentifier;
     private final String aggregateType;
     private final long sequenceNumber;
-    private final String timestamp;
+    private final Instant timestamp;
     private final Object serializedPayload;
     private final String payloadType;
     private final String payloadRevision;
@@ -70,7 +70,7 @@ public class EventEntry implements DomainEventData<Object> {
         payloadType = serializedPayloadObject.getType().getName();
         payloadRevision = serializedPayloadObject.getType().getRevision();
         serializedMetaData = serializedMetaDataObject.getData();
-        timestamp = formatInstant(event.getTimestamp());
+        timestamp = event.getTimestamp();
     }
 
     /**
@@ -87,7 +87,16 @@ public class EventEntry implements DomainEventData<Object> {
         aggregateType = (String) dbObject.get(configuration.typeProperty());
         sequenceNumber = ((Number) dbObject.get(configuration.sequenceNumberProperty())).longValue();
         serializedPayload = dbObject.get(configuration.payloadProperty());
-        timestamp = (String) dbObject.get(configuration.timestampProperty());
+        Object timestampField = dbObject.get(configuration.timestampProperty());
+        if(timestampField instanceof Date) {
+            timestamp = ((Date) timestampField).toInstant();
+        }
+        else if(timestampField instanceof Instant) {
+            timestamp = (Instant) timestampField;
+        }
+        else timestamp = parseInstant((String)timestampField);//to ensure backward compatibility
+        // when timestamps were written as strings
+
         payloadType = (String) dbObject.get(configuration.payloadTypeProperty());
         payloadRevision = (String) dbObject.get(configuration.payloadRevisionProperty());
         serializedMetaData = dbObject.get(configuration.metaDataProperty());
@@ -134,7 +143,7 @@ public class EventEntry implements DomainEventData<Object> {
 
     @Override
     public Instant getTimestamp() {
-        return DateTimeUtils.parseInstant(timestamp);
+        return timestamp;
     }
 
     @Override
