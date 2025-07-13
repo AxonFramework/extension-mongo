@@ -54,7 +54,7 @@
         <mongo.driver.version>5.4.0</mongo.driver.version>
         <!-- Logging -->
         <slf4j.version>2.0.17</slf4j.version>
-        <log4j.version>2.25.0</log4j.version>
+        <log4j.version>2.25.1</log4j.version>
         <!-- Serialization -->
         <jackson.version>2.19.1</jackson.version>
         <!-- Spring -->
