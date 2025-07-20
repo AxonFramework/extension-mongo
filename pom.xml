@@ -56,13 +56,13 @@
         <slf4j.version>2.0.17</slf4j.version>
         <log4j.version>2.25.1</log4j.version>
         <!-- Serialization -->
-        <jackson.version>2.19.1</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
         <!-- Spring -->
         <spring.version>5.3.39</spring.version>
         <spring.boot.version>2.7.18</spring.boot.version>
         <spring.data.mongodb.version>3.4.18</spring.data.mongodb.version>
         <!-- Other -->
-        <commons-io.version>2.19.0</commons-io.version>
+        <commons-io.version>2.20.0</commons-io.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
@@ -77,7 +77,7 @@
         <maven-assembly.version>3.7.1</maven-assembly.version>
         <maven-clean.version>3.5.0</maven-clean.version>
         <maven-compiler.version>3.14.0</maven-compiler.version>
-        <maven-enforcer.version>3.6.0</maven-enforcer.version>
+        <maven-enforcer.version>3.6.1</maven-enforcer.version>
         <maven-gpg.version>3.1.0</maven-gpg.version>
         <maven-install.version>3.1.4</maven-install.version>
         <maven-jar.version>3.4.2</maven-jar.version>
