@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,8 +51,6 @@ import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Sorts.orderBy;
 import static java.util.stream.StreamSupport.stream;
-import static org.axonframework.common.DateTimeUtils.formatInstant;
-import static org.axonframework.common.DateTimeUtils.parseInstant;
 import static org.axonframework.common.ObjectUtils.getOrDefault;
 
 /**
@@ -171,7 +170,7 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
             //noinspection ConstantConditions
             MongoTrackingToken trackingToken = (MongoTrackingToken) lastToken;
             cursor = eventCollection.find(and(gte(eventConfiguration.timestampProperty(),
-                                                  formatInstant(trackingToken.getTimestamp().minus(lookBackTime))),
+                                                  trackingToken.getTimestamp().minus(lookBackTime)),
                                               nin(eventConfiguration.eventIdentifierProperty(),
                                                   trackingToken.getKnownEventIds())));
         }
@@ -223,7 +222,7 @@ public abstract class AbstractMongoEventStorageStrategy implements StorageStrate
                                          .first();
         return Optional.ofNullable(first)
                        .map(d -> d.get(eventConfiguration.timestampProperty()))
-                       .map(t -> parseInstant((String) t))
+                       .map(t -> ((Date) t).toInstant())
                        .map(t -> MongoTrackingToken.of(t, Collections.emptyMap()))
                        .orElse(null);
     }
