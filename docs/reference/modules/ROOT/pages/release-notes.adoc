@@ -4,6 +4,19 @@
 You can find the release notes for the Mongo Extension of version 4.10.0 onward, below.
 For earlier releases, please go to the link:https://legacydocs.axoniq.io/reference-guide/release-notes/rn-extensions/rn-mongo[legacy documentation].
 
+== Release 4.11.1
+
+=== _Bug fixes_
+
+- [#477] fix: MongoDB cursor is not closed in `AbstractMongoEventStorageStrategy.findTrackedEvents` link:https://github.com/AxonFramework/extension-mongo/pull/481[#481]
+- MongoDB cursor is not closed in AbstractMongoEventStorageStrategy.findTrackedEvents link:https://github.com/AxonFramework/extension-mongo/issues/477[#477]
+
+=== _Contributors_
+
+We'd like to thank all the contributors who worked on this release!
+
+- link:https://github.com/MateuszNaKodach[@MateuszNaKodach]
+
 == Release 4.11.0
 
 Upgrades the Mongo Extension to be compatible with Axon Framework 4.11.0, and updates various dependencies.
