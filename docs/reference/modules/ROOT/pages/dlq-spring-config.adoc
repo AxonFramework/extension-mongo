@@ -1,7 +1,7 @@
 :navtitle: Configuration of the MongoDB Dead-Letter Queue with Spring
 = Configuration of the MongoDB Dead-Letter Queue with Spring
 
-See xref:axon-framework-reference:events:event-processors/index.adoc#dead-letter-queue[Dead-Letter Queue] for the general information about the Dead-Letter Queue.
+See Dead-Letter Queue for the general information about the Dead-Letter Queue.
 
 [source,java]
 ----
