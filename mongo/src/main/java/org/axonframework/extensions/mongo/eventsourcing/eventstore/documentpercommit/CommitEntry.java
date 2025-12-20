@@ -23,10 +23,12 @@ import org.axonframework.serialization.Serializer;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-import static org.axonframework.common.DateTimeUtils.formatInstant;
+import static org.axonframework.common.DateTimeUtils.parseInstant;
 
 /**
  * Mongo event storage entry containing an array of {@link EventEntry event entries} that are part of the same
@@ -41,8 +43,8 @@ public class CommitEntry {
     private final String aggregateType;
     private final long firstSequenceNumber;
     private final long lastSequenceNumber;
-    private final String firstTimestamp;
-    private final String lastTimestamp;
+    private final Instant firstTimestamp;
+    private final Instant lastTimestamp;
     private final EventEntry[] eventEntries;
     private final String lastEventIdentifier;
 
@@ -56,8 +58,8 @@ public class CommitEntry {
         DomainEventMessage<?> firstEvent = events.get(0);
         DomainEventMessage<?> lastEvent = events.get(events.size() - 1);
         firstSequenceNumber = firstEvent.getSequenceNumber();
-        firstTimestamp = formatInstant(firstEvent.getTimestamp());
-        lastTimestamp = formatInstant(lastEvent.getTimestamp());
+        firstTimestamp = firstEvent.getTimestamp();
+        lastTimestamp = lastEvent.getTimestamp();
         lastSequenceNumber = lastEvent.getSequenceNumber();
         aggregateIdentifier = lastEvent.getAggregateIdentifier();
         lastEventIdentifier = lastEvent.getIdentifier();
@@ -83,8 +85,8 @@ public class CommitEntry {
         this.firstSequenceNumber =
                 ((Number) dbObject.get(commitConfiguration.firstSequenceNumberProperty())).longValue();
         this.lastSequenceNumber = ((Number) dbObject.get(commitConfiguration.lastSequenceNumberProperty())).longValue();
-        this.firstTimestamp = (String) dbObject.get(commitConfiguration.firstTimestampProperty());
-        this.lastTimestamp = (String) dbObject.get(commitConfiguration.lastTimestampProperty());
+        this.firstTimestamp = castToInstant(dbObject.get(commitConfiguration.firstTimestampProperty()));
+        this.lastTimestamp = castToInstant(dbObject.get(commitConfiguration.lastTimestampProperty()));
         this.aggregateType = (String) dbObject.get(eventConfiguration.typeProperty());
         List<Document> entries = (List<Document>) dbObject.get(commitConfiguration.eventsProperty());
         eventEntries = new EventEntry[entries.size()];
@@ -92,6 +94,17 @@ public class CommitEntry {
         for (int i = 0, entriesSize = entries.size(); i < entriesSize; i++) {
             eventEntries[i] = new EventEntry(entries.get(i), eventConfiguration);
         }
+    }
+
+    private Instant castToInstant(Object timestampField) {
+        if(timestampField instanceof Date) {
+            return ((Date) timestampField).toInstant();
+        }
+        else if(timestampField instanceof Instant) {
+            return (Instant) timestampField;
+        }
+        else return parseInstant((String)timestampField);//to ensure backward compatibility
+        // when timestamps were written as strings
     }
 
     /**

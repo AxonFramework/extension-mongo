@@ -149,7 +149,7 @@ public class MongoTokenStore implements TokenStore {
         tokenEntry.claim(nodeId, claimTimeout);
 
         Bson update = combine(set(OWNER_PROPERTY_NAME, nodeId),
-                              set(TIMESTAMP_PROPERTY_NAME, tokenEntry.timestamp().toEpochMilli()),
+                              set(TIMESTAMP_PROPERTY_NAME, tokenEntry.timestamp()),
                               set(TOKEN_PROPERTY_NAME, tokenEntry.getSerializedToken().getData()),
                               set(TOKEN_TYPE_PROPERTY_NAME, tokenEntry.getSerializedToken().getType().getName()));
 
@@ -212,7 +212,7 @@ public class MongoTokenStore implements TokenStore {
                                    .findOneAndUpdate(
                                            claimableTokenEntryFilter(processorName, segment),
                                            combine(set(OWNER_PROPERTY_NAME, nodeId),
-                                                   set(TIMESTAMP_PROPERTY_NAME, clock.millis())),
+                                                   set(TIMESTAMP_PROPERTY_NAME, clock.instant())),
                                            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
                                    ));
 
@@ -239,7 +239,7 @@ public class MongoTokenStore implements TokenStore {
                                    .updateOne(and(eq(PROCESSOR_NAME_PROPERTY_NAME, processorName),
                                                   eq(SEGMENT_PROPERTY_NAME, segment),
                                                   eq(OWNER_PROPERTY_NAME, nodeId)),
-                                              set(TIMESTAMP_PROPERTY_NAME, clock.instant().toEpochMilli())));
+                                              set(TIMESTAMP_PROPERTY_NAME, clock.instant())));
         if (updateResult.getMatchedCount() == 0) {
             throw new UnableToClaimTokenException(format(
                     "Unable to extend claim on token token '%s[%s]'. It is owned by another segment.",
@@ -385,7 +385,7 @@ public class MongoTokenStore implements TokenStore {
                 or(
                         eq(OWNER_PROPERTY_NAME, nodeId),
                         eq(OWNER_PROPERTY_NAME, null),
-                        lt(TIMESTAMP_PROPERTY_NAME, clock.instant().minus(claimTimeout).toEpochMilli())
+                        lt(TIMESTAMP_PROPERTY_NAME, clock.instant().minus(claimTimeout))
                 )
         );
     }
@@ -402,7 +402,7 @@ public class MongoTokenStore implements TokenStore {
                 or(
                         eq(OWNER_PROPERTY_NAME, nodeId),
                         eq(OWNER_PROPERTY_NAME, null),
-                        lt(TIMESTAMP_PROPERTY_NAME, clock.instant().minus(claimTimeout).toEpochMilli())
+                        lt(TIMESTAMP_PROPERTY_NAME, clock.instant().minus(claimTimeout))
                 )
         );
     }
@@ -411,7 +411,7 @@ public class MongoTokenStore implements TokenStore {
         return new Document(PROCESSOR_NAME_PROPERTY_NAME, tokenEntry.getProcessorName())
                 .append(SEGMENT_PROPERTY_NAME, tokenEntry.getSegment())
                 .append(OWNER_PROPERTY_NAME, tokenEntry.getOwner())
-                .append(TIMESTAMP_PROPERTY_NAME, tokenEntry.timestamp().toEpochMilli())
+                .append(TIMESTAMP_PROPERTY_NAME, tokenEntry.timestamp())
                 .append(TOKEN_PROPERTY_NAME,
                         tokenEntry.getSerializedToken() == null ? null : tokenEntry.getSerializedToken().getData())
                 .append(TOKEN_TYPE_PROPERTY_NAME,
@@ -420,10 +420,14 @@ public class MongoTokenStore implements TokenStore {
     }
 
     private AbstractTokenEntry<?> documentToTokenEntry(Document document) {
+        Object time=document.get(TIMESTAMP_PROPERTY_NAME);
+        if(time instanceof Long){
+            long aa=(long)time;
+        }
         return new GenericTokenEntry<>(
                 readSerializedData(document),
                 document.getString(TOKEN_TYPE_PROPERTY_NAME),
-                Instant.ofEpochMilli(document.getLong(TIMESTAMP_PROPERTY_NAME)).toString(),
+                document.getDate(TIMESTAMP_PROPERTY_NAME).toInstant().toString(),
                 document.getString(OWNER_PROPERTY_NAME),
                 document.getString(PROCESSOR_NAME_PROPERTY_NAME),
                 document.getInteger(SEGMENT_PROPERTY_NAME),
